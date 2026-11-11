@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Police Officer Login - TRAFFIX</title>
+</head>
+<body>
+  <header>
+    <table width="100%" border="0" cellpadding="10" cellspacing="0">
+      <tr>
+        <td align="left">
+          <strong>TRAFFIX CENTRAL</strong>
+        </td>
+        <td align="right">
+          <nav aria-label="Main Navigation">
+            <a href="home.html">Home</a> &nbsp;&nbsp;&nbsp;
+            <a href="driver-search.html">Driver Check</a> &nbsp;&nbsp;&nbsp;
+            <a href="vehicle-scan.html">Vehicle ANPR</a> &nbsp;&nbsp;&nbsp;
+            <strong><a href="login.html">Officer Login</a></strong>
+          </nav>
+        </td>
+      </tr>
+    </table>
+    <hr size="2" color="black">
+  </header>
+  <main>
+    <center>
+      <br><br>
+      <table width="32%" border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td>
+            <fieldset>
+              <center>
+                <br>
+                <h3>TP</h3>
+                <h2>Police Officer Portal</h2>
+                <p><small>Enter official credentials to access enforcement tools</small></p>
+                <br>
+                <form action="driver-search.html" method="get">
+                  <table width="90%" border="0" cellpadding="4" cellspacing="0">
+                    <tr>
+                      <td align="left">
+                        <label for="badge-id"><small>Badge / Police ID Number</small></label>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="left">
+                        <input type="text" id="badge-id" name="badge_id" placeholder="e.g. POL-84920" size="38" required>
+                      </td>
+                    </tr>
+                    <tr><td><br></td></tr>
+                    <tr>
+                      <td align="left">
+                        <label for="division"><small>Police Station / Division</small></label>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="left">
+                        <select id="division" name="division" style="width: 100%;" disabled-css required>
+                          <option value="">Select Division</option>
+                          <option value="colombo">Colombo Central</option>
+                          <option value="highway">Southern Expressway Division</option>
+                          <option value="kandy">Kandy Division</option>
+                          <option value="galle">Galle Division</option>
+                        </select>
+                      </td>
+                    </tr>
+                    <tr><td><br></td></tr>
+                    <tr>
+                      <td align="left">
+                        <label for="password"><small>Security PIN / Password</small></label>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="left">
+                        <input type="password" id="password" name="password" placeholder="••••••••" size="38" required>
+                      </td>
+                    </tr>
+                    <tr><td><br></td></tr>
+                    <tr>
+                      <td align="center">
+                        <button type="submit"><strong>Verify &amp; Access Portal</strong></button>
+                      </td>
+                    </tr>
+                    <tr><td><br></td></tr>
+                    <tr>
+                      <td align="center">
+                        <a href="home.html"><small>&larr; Back to Public Portal</small></a>
+                      </td>
+                    </tr>
+                  </table>
+                </form>
+                <br>
+              </center>
+            </fieldset>
+          </td>
+        </tr>
+      </table>
+      <br><br>
+    </center>
+  </main>
+</body>
+</html>
