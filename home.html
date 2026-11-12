@@ -3,68 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
-  <title>Smart Traffic Enforcement Portal - TRAFFIX</title>
+  <meta name="description" content="TRAFFIX Central Field Enforcement Dashboard">
+  <title>Enforcement Dashboard - TRAFFIX CENTRAL</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
-    <table width="100%" border="0" cellpadding="10" cellspacing="0">
-      <tr>
-        <td align="left">
-          <strong>TRAFFIX CENTRAL</strong>
-        </td>
-        <td align="right">
-          <nav aria-label="Main Navigation">
-            <a href="home.html">Home</a> &nbsp;&nbsp;&nbsp;
-            <a href="Driver-search.html">Driver Check</a> &nbsp;&nbsp;&nbsp;
-            <a href="Add-violation.html">Add Violation</a> &nbsp;&nbsp;&nbsp;
-            <a href="vehicle-scan.html">Vehicle ANPR</a> &nbsp;&nbsp;&nbsp;
-            <a href="login.html">Officer Login</a>
-          </nav>
-        </td>
-      </tr>
-    </table>
-    <hr size="2" color="black">
+    <h1>TRAFFIX CENTRAL</h1>
+    <nav>
+      <a href="home.html" class="active">Dashboard</a>
+      <a href="vehicle-scan.html">Vehicle ANPR</a>
+      <a href="driver-search.html">Driver Check</a>
+      <a href="add-violation.html">Add Violation</a>
+      <a href="index.html" class="btn-logout">Logout</a>
+    </nav>
   </header>
+
   <main>
-    <center>
-      <br><br>
-      <h1>Smart Traffic Violation &amp; ANPR Monitoring</h1>
-      
-      <p>
-        A centralized digital enforcement system designed for police units to instantly detect repeat offenders, track demerit points,<br>
-        and scan vehicle plates on duty.
-      </p>
+    <aside class="duty-banner">
+      <div>
+        <strong>Officer:</strong> POL-84920 |
+        <strong>Location:</strong> Galle Road, Bambalapitiya |
+        <strong>Nearby Officer:</strong> POL-84925
+      </div>
+      <span class="status-pill">● DUTY SESSION ACTIVE</span>
+    </aside>
 
-      <p>
-        <a href="login.html">Officer Access Portal</a>
-      </p>
+    <section>
+      <h2>Field Enforcement Operations</h2>
+      <p>Select an operational module below to scan vehicle plates, inspect driver demerit points, or log a new traffic offense.</p>
 
-      <br><br>
-      <table border="0" cellpadding="10" cellspacing="20" width="80%">
-        <tr>
-          <td width="33%" valign="top">
-            <fieldset>
-              <legend><h3>Driver History Profile</h3></legend>
-              <p>Instant lookup of driver offenses, dates, repeat patterns, and remaining demerit limits.</p>
-            </fieldset>
-          </td>
-          <td width="33%" valign="top">
-            <fieldset>
-              <legend><h3>Camera ANPR Plate Scan</h3></legend>
-              <p>Fast scanning of vehicle registration numbers to instantly pull violation logs and summons.</p>
-            </fieldset>
-          </td>
-          <td width="33%" valign="top">
-            <fieldset>
-              <legend><h3>Demerit Points Limit</h3></legend>
-              <p>Automated threshold tracking that triggers immediate warnings and license suspension notices.</p>
-            </fieldset>
-          </td>
-        </tr>
-      </table>
-      <br><br>
-    </center>
+      <div class="grid-cards">
+        <article>
+          <div>
+            <h3>1. Vehicle ANPR Scanner</h3>
+            <p>Scan vehicle license plates via camera to verify registration, revenue license, and unpaid fines.</p>
+          </div>
+          <a href="vehicle-scan.html" class="btn-primary">Open ANPR Scanner</a>
+        </article>
+
+        <article>
+          <div>
+            <h3>2. Driver History Lookup</h3>
+            <p>Query Driver License or NIC numbers to check repeat offenses and remaining demerit limits (24-point cap).</p>
+          </div>
+          <a href="driver-search.html" class="btn-primary">Check Driver Record</a>
+        </article>
+
+        <article>
+          <div>
+            <h3>3. Issue Traffic Citation</h3>
+            <p>Log a new violation directly into the central database and apply demerit points automatically.</p>
+          </div>
+          <a href="add-violation.html" class="btn-primary btn-danger">+ Record New Violation</a>
+        </article>
+      </div>
+    </section>
   </main>
+
+  <footer>
+    <p>&copy; 2026 TRAFFIX Central - Automated Traffic Enforcement System</p>
+  </footer>
 </body>
 </html>

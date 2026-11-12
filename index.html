@@ -3,82 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
-  <title>Vehicle & Driver Verification System</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="description" content="TRAFFIX Central Police Officer Login Portal">
+  <title>Officer Login - TRAFFIX CENTRAL</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
   <header>
-    <h1>Vehicle & Driver   Verification System</h1>
+    <h1>TRAFFIX CENTRAL</h1>
+    <nav>
+      <span>RESTRICTED ACCESS: AUTHORIZED POLICE PERSONNEL ONLY</span>
+    </nav>
   </header>
 
-  <main>
+  <main class="gate-container">
+    <section>
+      <h2>Police Officer Login</h2>
+      <p>Please sign in with your official Badge ID to activate your duty session.</p>
 
-    <!-- 1. DRIVER LICENSE -->
-    <section id="driver-license">
-      <h2>Driver License</h2>
+      <form action="location-setup.html" method="get">
+        <fieldset>
+          <legend>Officer Authentication</legend>
 
-      <form id="license-form">
-        <label for="license-number">Enter License Number:</label>
-        <input type="text" id="license-number" name="license-number" placeholder="Enter license number">
+          <div>
+            <label for="badgeId">Officer Badge ID</label>
+            <input type="text" id="badgeId" name="badgeId" placeholder="e.g. POL-84920" required>
+          </div>
 
-        <button type="submit">Submit</button>
-        <button type="button" id="scan-barcode">Scan the Barcode</button>
+          <div>
+            <label for="officerPass">Security Password / PIN</label>
+            <input type="password" id="officerPass" name="officerPass" placeholder="Enter your password" required>
+          </div>
+
+          <button type="submit">Verify &amp; Proceed to Duty Location</button>
+        </fieldset>
       </form>
 
-      <!-- Database: Enter the history -->
-      <div id="license-history">
-        <h3>History</h3>
-        <p><strong>Previous Violations:</strong> <span id="previous-violations">-</span></p>
-        <p><strong>Action:</strong> <span id="violation-action">-</span></p>
-        <p><strong>Counts:</strong> <span id="violation-counts">0</span></p>
-        <small>(More than 10 within a month automatically suspend)</small>
-      </div>
+      <aside>
+        <div>
+          <strong>New Officer Account?</strong>
+          <p>Only the Head System Administrator can register new police officers.</p>
+        </div>
+        <a href="admin-login.html" class="btn-primary">Admin Login to Register Officer</a>
+      </aside>
     </section>
-
-    <!-- 2. VEHICLE NUMBER -->
-    <section id="vehicle-number-section">
-      <h2>Vehicle Number</h2>
-
-      <form id="vehicle-form">
-        <label for="vehicle-number">Enter Vehicle Number:</label>
-        <input type="text" id="vehicle-number" name="vehicle-number" placeholder="Enter vehicle number">
-
-        <button type="submit">Log to Database</button>
-        <button type="button" id="scan-vehicle-number">Scan the Number</button>
-      </form>
-
-      <!-- Database: Log to the RMV database -->
-      <div id="rmv-database">
-        <h3>RMV Database Records</h3>
-        <p><strong>Documentation History:</strong> <span id="doc-history">-</span></p>
-        <p><strong>Current Owner:</strong> <span id="current-owner">-</span></p>
-        <p><strong>Court Orders:</strong> <span id="court-orders">-</span></p>
-      </div>
-    </section>
-
-    <!-- 3. CHECKPOINTS & STOLEN VEHICLE -->
-    <section id="security-operations">
-      <h2>Checkpoints & Alerts</h2>
-
-      <!-- Find Nearest Checkpoint -->
-      <div id="checkpoint-module">
-        <h3>Find Nearest Checkpoint</h3>
-        <button type="button" id="btn-google-map">Connect with Google Map</button>
-        <div id="map"></div>
-      </div>
-
-      <!-- Find Stolen Vehicle -->
-      <div id="stolen-vehicle-module">
-        <h3>Find Stolen Vehicle</h3>
-        <button type="button" id="btn-send-alerts">Automatically Send the Alerts</button>
-        <div id="alert-status"></div>
-      </div>
-    </section>
-
   </main>
 
-  <script src="script.js"></script>
+  <footer>
+    <p>&copy; 2026 TRAFFIX Central - Traffic Police Enforcement Division</p>
+  </footer>
 </body>
 </html>

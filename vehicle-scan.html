@@ -2,141 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">#
-  <link rel="stylesheet" href="style.css">
-  <title>Vehicle ANPR - TRAFFIX CENTRAL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ANPR Vehicle License Plate Recognition Scanner">
+  <title>Vehicle ANPR Scan - TRAFFIX CENTRAL</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
-    <table width="100%" border="0" cellpadding="10" cellspacing="0">
-      <tr>
-        <td align="left">
-          <strong>TRAFFIX CENTRAL</strong>
-        </td>
-        <td align="right">
-          <nav aria-label="Main Navigation">
-            <a href="home.html">Home</a> &nbsp;&nbsp;&nbsp;
-            <a href="driver-search.html">Driver Check</a> &nbsp;&nbsp;&nbsp;
-            <strong><a href="vehicle-scan.html">Vehicle ANPR</a></strong> &nbsp;&nbsp;&nbsp;
-            <a href="add-violation.html">Add Violation</a> &nbsp;&nbsp;&nbsp;
-            <a href="login.html">Logout</a>
-          </nav>
-        </td>
-      </tr>
-    </table>
-    <hr size="2" color="black">
+    <h1>TRAFFIX CENTRAL</h1>
+    <nav>
+      <a href="home.html">Dashboard</a>
+      <a href="vehicle-scan.html" class="active">Vehicle ANPR</a>
+      <a href="driver-search.html">Driver Check</a>
+      <a href="add-violation.html">Add Violation</a>
+      <a href="index.html" class="btn-logout">Logout</a>
+    </nav>
   </header>
+
   <main>
-    <center>
-      <br>
-      <table width="85%" border="0" cellpadding="0" cellspacing="0">
-        <tr>
-          <td>
-            <h2 align="left">ANPR License Plate Camera Feed &amp; Inspection</h2>
-          </td>
-        </tr>
+    <aside class="duty-banner">
+      <div>
+        <strong>Officer:</strong> POL-84920 |
+        <strong>Location:</strong> Galle Road, Bambalapitiya |
+        <strong>Nearby Officer:</strong> POL-84925
+      </div>
+      <span class="status-pill">● ANPR CAMERA READY</span>
+    </aside>
+
+    <section>
+      <h2>ANPR License Plate Camera Scanner</h2>
+      <p>Capture vehicle registration plate or enter plate number manually to check vehicle compliance and violation history.</p>
+
+      <figure>
+        <div class="plate-badge">WP CAA - 7892</div>
+        <figcaption>● LIVE OPTICAL CHARACTER RECOGNITION (OCR) LOCKED</figcaption>
+      </figure>
+
+      <form action="vehicle-scan.html" method="get">
+        <label for="plateInput">Manual Plate Verification / Override</label>
+        <input type="text" id="plateInput" name="plateInput" value="WP CAA-7892" required>
+        <button type="submit">Query Vehicle Registry</button>
+      </form>
+    </section>
+
+    <section>
+      <h3>Scanned Vehicle Compliance Report</h3>
+      <span class="badge-high-risk">ALERT: 2 UNPAID SUMMONS &amp; EXPIRED REVENUE LICENSE</span>
+
+      <table>
+        <caption>Vehicle &amp; Owner Details</caption>
+        <tbody>
+          <tr>
+            <th>Registration Plate</th>
+            <td><strong>WP CAA - 7892</strong></td>
+          </tr>
+          <tr>
+            <th>Vehicle Make &amp; Model</th>
+            <td>Toyota Prius (Pearl White)</td>
+          </tr>
+          <tr>
+            <th>Registered Owner</th>
+            <td>S. H. Wickramasinghe</td>
+          </tr>
+          <tr>
+            <th>Revenue License Status</th>
+            <td>Expired (June 2026)</td>
+          </tr>
+          <tr>
+            <th>Insurance Status</th>
+            <td>Valid (SLIC Comprehensive)</td>
+          </tr>
+          <tr>
+            <th>Pending Fine Balance</th>
+            <td>LKR 7,500.00</td>
+          </tr>
+        </tbody>
       </table>
-      <br>
-      <table width="85%" border="0" cellpadding="15" cellspacing="20">
-        <tr valign="top">
-          <td width="50%">
-            <fieldset>
-              <br>
-              <center>
-                <fieldset>
-                  <br><br>
-                  <center>
-                    <table border="1" cellpadding="20" cellspacing="0" width="180">
-                      <tr>
-                        <td align="center">
-                          <small>&nbsp;</small>
-                        </td>
-                      </tr>
-                    </table>
-                  </center>
-                  <br><br>
-                  <p align="center">
-                    <small>&#9679; LIVE CAMERA RECOGNITION ACTIVE</small>
-                  </p>
-                </fieldset>
 
-                <p align="center">
-                  <small>Position vehicular registration plate within the scanning frame</small>
-                </p>
-
-                <p align="center">
-                  <button type="button">Capture Frame Manually</button>
-                </p>
-              </center>
-              <br>
-            </fieldset>
-          </td>
-          <td width="50%">
-            <fieldset>
-              <br>
-              <table border="1" cellpadding="5" cellspacing="0" width="45">
-                <tr>
-                  <td>&nbsp;</td>
-                </tr>
-              </table>
-
-              <br>
-
-              <table width="100%" border="0" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="left">Vehicle Model</td>
-                </tr>
-                <tr>
-                  <td><hr size="1" color="black"></td>
-                </tr>
-
-                <tr>
-                  <td align="left">Registered Owner</td>
-                </tr>
-                <tr>
-                  <td><hr size="1" color="black"></td>
-                </tr>
-
-                <tr>
-                  <td align="left">Revenue License</td>
-                </tr>
-                <tr>
-                  <td><hr size="1" color="black"></td>
-                </tr>
-
-                <tr>
-                  <td align="left">Insurance Policy</td>
-                </tr>
-                <tr>
-                  <td><hr size="1" color="black"></td>
-                </tr>
-
-                <tr>
-                  <td align="left">Outstanding Fines</td>
-                </tr>
-                <tr>
-                  <td><hr size="1" color="black"></td>
-                </tr>
-              </table>
-
-              <br><br>
-              <table width="100%" border="0" cellpadding="5" cellspacing="0">
-                <tr>
-                  <td align="center">
-                    <a href="add-violation.html">+ Issue Citation</a>
-                  </td>
-                  <td align="center">
-                    <a href="driver-search.html">View History</a>
-                  </td>
-                </tr>
-              </table>
-              <br>
-            </fieldset>
-          </td>
-        </tr>
-      </table>
-      <br><br>
-    </center>
+      <div class="grid-cards">
+        <a href="add-violation.html" class="btn-primary btn-danger">+ Issue Citation for WP CAA-7892</a>
+        <a href="driver-search.html" class="btn-primary">Inspect Driver Demerit Record</a>
+      </div>
+    </section>
   </main>
+
+  <footer>
+    <p>&copy; 2026 TRAFFIX Central - ANPR Enforcement Module</p>
+  </footer>
 </body>
 </html>

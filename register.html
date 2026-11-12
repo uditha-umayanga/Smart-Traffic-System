@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Register New Traffic Police Officer">
+  <title>Register New Officer - TRAFFIX CENTRAL</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>TRAFFIX CENTRAL | OFFICER REGISTRATION</h1>
+    <nav>
+      <a href="index.html" class="btn-logout">Exit Admin Session</a>
+    </nav>
+  </header>
+
+  <main>
+    <aside class="duty-banner">
+      <div>
+        <strong>Active Session:</strong> Head System Administrator (ID: 0000)
+      </div>
+      <span class="status-pill">ADMIN PRIVILEGES ACTIVE</span>
+    </aside>
+
+    <section>
+      <h2>Register New Traffic Police Officer</h2>
+      <p>Complete the form below to issue a new Badge ID and system login credentials to an authorized officer.</p>
+
+      <form action="index.html" method="get">
+        <fieldset>
+          <legend>Officer Personal &amp; Departmental Details</legend>
+
+          <div>
+            <label for="fullName">Officer Full Name (with Rank)</label>
+            <input type="text" id="fullName" name="fullName" placeholder="e.g. SI R. M. Dissanayake" required>
+          </div>
+
+          <div>
+            <label for="nicNo">National Identity Card (NIC) Number</label>
+            <input type="text" id="nicNo" name="nicNo" placeholder="e.g. 199512403892" required>
+          </div>
+
+          <div>
+            <label for="newBadgeId">Assign New Officer Badge ID</label>
+            <input type="text" id="newBadgeId" name="newBadgeId" placeholder="e.g. POL-90145" required>
+          </div>
+
+          <div>
+            <label for="division">Assigned Police Division / Station</label>
+            <select id="division" name="division" required>
+              <option value="">-- Select Police Division --</option>
+              <option value="colombo">Colombo Central Traffic Division</option>
+              <option value="highway">Southern Expressway Patrol Unit</option>
+              <option value="kandy">Kandy Traffic Division</option>
+              <option value="galle">Galle Traffic Division</option>
+              <option value="kurunegala">Kurunegala Traffic Division</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="newPass">Create Login Password / PIN</label>
+            <input type="password" id="newPass" name="newPass" placeholder="Assign temporary password" required>
+          </div>
+
+          <div>
+            <label for="confirmPass">Confirm Login Password / PIN</label>
+            <input type="password" id="confirmPass" name="confirmPass" placeholder="Re-enter password" required>
+          </div>
+
+          <button type="submit">Complete Registration &amp; Return to Login</button>
+        </fieldset>
+      </form>
+    </section>
+
+    <section>
+      <h3>Recently Registered Officers (Audit Log)</h3>
+      <table>
+        <caption>Active Departmental Officer Registry</caption>
+        <thead>
+          <tr>
+            <th>Badge ID</th>
+            <th>Officer Name &amp; Rank</th>
+            <th>Assigned Division</th>
+            <th>Registered By</th>
+            <th>Account Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>POL-84920</td>
+            <td>IP K. A. Silva</td>
+            <td>Colombo Central</td>
+            <td>Admin (0000)</td>
+            <td>Active</td>
+          </tr>
+          <tr>
+            <td>POL-84925</td>
+            <td>SI N. P. Jayawardena</td>
+            <td>Southern Expressway</td>
+            <td>Admin (0000)</td>
+            <td>Active</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 TRAFFIX Central - Police Personnel Registry</p>
+  </footer>
+</body>
+</html>

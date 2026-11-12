@@ -1,0 +1,417 @@
+/* ==========================================================================
+   TRAFFIX CENTRAL - Smart Traffic Enforcement & ANPR Platform
+   Complete Stylesheet (styles.css)
+   ========================================================================== */
+
+/* 1. Reset & Base Typography */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #074661;
+  background-image: linear-gradient(135deg, #074661 0%, #0b192c 100%);
+  color: #f8fafc;
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 2. Header & Navigation Bar */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 40px;
+  background-color: #121924;
+  border-bottom: 2px solid #334155;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+header .brand,
+header h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+header img {
+  height: 36px;
+  width: auto;
+  border-radius: 4px;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+nav a {
+  color: #cbd5e1;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+}
+
+nav a:hover,
+nav a.active {
+  color: #38bdf8;
+  background-color: rgba(56, 189, 248, 0.1);
+}
+
+nav a.btn-logout,
+nav a[href="index.html"]:last-child {
+  background-color: #dc2626;
+  color: #ffffff;
+  padding: 8px 16px;
+  font-weight: 600;
+}
+
+nav a.btn-logout:hover,
+nav a[href="index.html"]:last-child:hover {
+  background-color: #b91c1c;
+}
+
+/* 3. Main Layout Container */
+main {
+  flex: 1;
+  width: 100%;
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+/* Centered Gate Pages (Login & Location Setup) */
+main.gate-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 140px);
+}
+
+/* 4. Cards, Sections & Fieldsets */
+section,
+article,
+fieldset {
+  background-color: #1e293b;
+  border: 2px solid #ffffff;
+  border-radius: 12px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+}
+
+legend {
+  background-color: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 6px 16px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+h2 {
+  color: #38bdf8;
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+h3 {
+  color: #f8fafc;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+p {
+  color: #cbd5e1;
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+
+/* 5. Active Duty Status Banner (Location + Nearby Officer) */
+.duty-banner,
+aside {
+  background-color: #0f172a;
+  border-left: 5px solid #10b981;
+  border-top: 1px solid #334155;
+  border-right: 1px solid #334155;
+  border-bottom: 1px solid #334155;
+  border-radius: 8px;
+  padding: 14px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.duty-banner strong,
+aside strong {
+  color: #38bdf8;
+}
+
+.status-pill {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid #10b981;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* 6. Forms, Inputs, Labels & Buttons */
+form div,
+.form-group {
+  margin-bottom: 18px;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 6px;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+  width: 100%;
+  padding: 12px 14px;
+  background-color: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+
+input[readonly] {
+  background-color: #162032;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+button,
+input[type="submit"],
+.btn-primary {
+  display: inline-block;
+  width: 100%;
+  padding: 13px 22px;
+  background-color: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+button:hover,
+input[type="submit"]:hover,
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+button:active,
+input[type="submit"]:active {
+  transform: scale(0.99);
+}
+
+.btn-danger {
+  background-color: #dc2626;
+}
+
+.btn-danger:hover {
+  background-color: #b91c1c;
+}
+
+/* 7. Dashboard Grid & Feature Cards */
+.grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.grid-cards article {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.grid-cards article:hover {
+  transform: translateY(-4px);
+  border-color: #38bdf8;
+}
+
+/* 8. Tables & Audit Logs */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+  background-color: #0f172a;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #334155;
+}
+
+caption {
+  caption-side: top;
+  text-align: left;
+  font-weight: 700;
+  color: #38bdf8;
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+th,
+td {
+  padding: 13px 15px;
+  text-align: left;
+  border-bottom: 1px solid #334155;
+  font-size: 14px;
+}
+
+th {
+  background-color: #162032;
+  color: #38bdf8;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+tr:hover {
+  background-color: rgba(56, 189, 248, 0.05);
+}
+
+/* 9. ANPR Camera Scanner & Plate Display */
+figure {
+  background-color: #000000;
+  border: 2px dashed #38bdf8;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  margin: 18px 0;
+}
+
+figure img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  border: 2px solid #38bdf8;
+}
+
+figcaption {
+  color: #34d399;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 10px;
+  letter-spacing: 1px;
+}
+
+.plate-badge {
+  display: inline-block;
+  background-color: #0f172a;
+  color: #facc15;
+  border: 2px solid #eab308;
+  font-size: 22px;
+  font-weight: 800;
+  padding: 8px 18px;
+  border-radius: 6px;
+  letter-spacing: 2px;
+  margin: 10px 0;
+}
+
+/* 10. Alert & Demerit Warning Boxes */
+.alert-danger {
+  background-color: rgba(220, 38, 38, 0.15);
+  border: 1px solid #ef4444;
+  color: #fca5a5;
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin: 18px 0;
+}
+
+.badge-high-risk {
+  display: inline-block;
+  background-color: #dc2626;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 6px;
+}
+
+/* 11. Footer */
+footer {
+  background-color: #121924;
+  color: #94a3b8;
+  text-align: center;
+  padding: 18px 20px;
+  font-size: 13px;
+  border-top: 1px solid #334155;
+  margin-top: auto;
+}
+
+/* 12. Responsive Adjustments for Mobile / Handhelds */
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    padding: 15px 20px;
+    gap: 12px;
+  }
+
+  nav {
+    justify-content: center;
+  }
+
+  section,
+  article,
+  fieldset {
+    padding: 20px;
+  }
+
+  th,
+  td {
+    padding: 10px;
+    font-size: 13px;
+  }
+}

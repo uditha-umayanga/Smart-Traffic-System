@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Head Administrator Authentication for Officer Registration">
+  <title>Admin Authentication - TRAFFIX CENTRAL</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>TRAFFIX CENTRAL | ADMIN GATE</h1>
+    <nav>
+      <a href="index.html">Back to Officer Login</a>
+    </nav>
+  </header>
+
+  <main class="gate-container">
+    <section>
+      <h2>System Administrator Login</h2>
+      <p>Special administrative credentials are required to register new police officers into the central database.</p>
+
+      <div class="alert-danger">
+        <strong>Authorized Admin Credentials:</strong> Use Special Admin ID <code>0000</code> and Password <code>0000</code> to unlock the registration module.
+      </div>
+
+      <form action="register.html" method="get">
+        <fieldset>
+          <legend>Admin Verification</legend>
+
+          <div>
+            <label for="adminId">Special Admin ID</label>
+            <input type="text" id="adminId" name="adminId" pattern="0000" title="Enter valid Admin ID: 0000" placeholder="Enter Admin ID (0000)" required>
+          </div>
+
+          <div>
+            <label for="adminPass">Special Admin Password</label>
+            <input type="password" id="adminPass" name="adminPass" pattern="0000" title="Enter valid Admin Password: 0000" placeholder="Enter Admin Password (0000)" required>
+          </div>
+
+          <button type="submit">Authenticate as Admin</button>
+        </fieldset>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 TRAFFIX Central - Administrative Control Unit</p>
+  </footer>
+</body>
+</html>

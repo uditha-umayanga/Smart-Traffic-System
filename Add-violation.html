@@ -3,131 +3,89 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
-  <title>Issue Traffic Citation - TRAFFIX CENTRAL</title>
+  <meta name="description" content="Issue New Traffic Violation Citation">
+  <title>Add Violation - TRAFFIX CENTRAL</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
-    <table width="100%" border="0" cellpadding="10" cellspacing="0">
-      <tr>
-        <td align="left">
-          <strong>TRAFFIX CENTRAL</strong>
-        </td>
-        <td align="right">
-          <nav aria-label="Main Navigation">
-            <a href="home.html">Home</a> &nbsp;&nbsp;&nbsp;
-            <a href="driver-search.html">Driver Check</a> &nbsp;&nbsp;&nbsp;
-            <a href="vehicle-scan.html">Vehicle ANPR</a> &nbsp;&nbsp;&nbsp;
-            <strong><a href="add-violation.html">Add Violation</a></strong> &nbsp;&nbsp;&nbsp;
-            <a href="login.html">Logout</a>
-          </nav>
-        </td>
-      </tr>
-    </table>
-    <hr size="2" color="black">
+    <h1>TRAFFIX CENTRAL</h1>
+    <nav>
+      <a href="home.html">Dashboard</a>
+      <a href="vehicle-scan.html">Vehicle ANPR</a>
+      <a href="driver-search.html">Driver Check</a>
+      <a href="add-violation.html" class="active">Add Violation</a>
+      <a href="index.html" class="btn-logout">Logout</a>
+    </nav>
   </header>
+
   <main>
-    <center>
-      <br>
-      <table width="50%" border="0" cellpadding="0" cellspacing="0">
-        <tr>
-          <td>
-            <fieldset>
-              <br>
-              <h2 align="left">Log New Traffic Violation</h2>
-              <p align="left">Enter offense parameters. Demerit points will be automatically mapped to driver and vehicle identity.</p>
+    <aside class="duty-banner">
+      <div>
+        <strong>Officer:</strong> POL-84920 |
+        <strong>Location:</strong> Galle Road, Bambalapitiya |
+        <strong>Nearby Officer:</strong> POL-84925
+      </div>
+      <span class="status-pill">● CITATION ENTRY MODE</span>
+    </aside>
 
-              <form action="driver-search.html" method="post">
-                <table width="100%" border="0" cellpadding="5" cellspacing="0">
-                  <tr>
-                    <td width="50%">
-                      <label for="driver-license">Driver License Number</label><br>
-                      <input type="text" id="driver-license" name="driver_license" placeholder="Enter Driver License Number" size="30" required>
-                    </td>
-                    <td width="50%">
-                      <label for="vehicle-plate">Vehicle Number (Plate)</label><br>
-                      <input type="text" id="vehicle-plate" name="vehicle_plate" placeholder="Enter Vehicle Number" size="30" required>
-                    </td>
-                  </tr>
-                </table>
+    <section>
+      <h2>Record New Traffic Violation</h2>
+      <p>Submit citation details below. Demerit points will be added to the driver's record automatically.</p>
 
-                <br>
+      <form action="driver-search.html" method="get">
+        <fieldset>
+          <legend>Citation &amp; Offense Details</legend>
 
-                <table width="100%" border="0" cellpadding="5" cellspacing="0">
-                  <tr>
-                    <td>
-                      <label for="violation-category">Violation Category</label><br>
-                      <select id="violation-category" name="violation_category" required>
-                        <option value="">Select Specific Violation</option>
-                        <option value="speeding">Over-Speeding (&gt;60 km/h) [+4 Demerit Points]</option>
-                        <option value="red_light">Red Light Signal Violation [+3 Demerit Points]</option>
-                        <option value="lane_departure">Reckless Lane Drift / Road Departure [+3 Demerit Points]</option>
-                        <option value="dui">Driving Under Influence (DUI) [+10 Points - Suspension Warning]</option>
-                        <option value="belt">Failure to Wear Seatbelt / Helmet [+2 Demerit Points]</option>
-                      </select>
-                    </td>
-                  </tr>
-                </table>
+          <div>
+            <label for="licNo">Driver License Number</label>
+            <input type="text" id="licNo" name="licNo" value="B4920194" required>
+          </div>
 
-                <br>
+          <div>
+            <label for="vehNo">Vehicle Number (Plate)</label>
+            <input type="text" id="vehNo" name="vehNo" value="WP CAA-7892" required>
+          </div>
 
-                <table width="100%" border="0" cellpadding="5" cellspacing="0">
-                  <tr>
-                    <td width="50%">
-                      <label for="location">Location / Highway Landmark</label><br>
-                      <input type="text" id="location" name="location" placeholder="e.g. Galle Road, Wellawatte" size="30" required>
-                    </td>
-                    <td width="50%">
-                      <label for="officer-badge">Officer Badge ID</label><br>
-                      <input type="text" id="officer-badge" name="officer_badge" placeholder="POL-84920" size="30" readonly>
-                    </td>
-                  </tr>
-                </table>
+          <div>
+            <label for="violationType">Offense Category</label>
+            <select id="violationType" name="violationType" required>
+              <option value="">-- Select Traffic Violation --</option>
+              <option value="speeding">Over-Speeding (&gt;60 km/h) [+4 Demerit Points]</option>
+              <option value="red_light">Red Light Signal Violation [+3 Demerit Points]</option>
+              <option value="lane_departure">Reckless Lane Drift / Road Departure [+3 Demerit Points]</option>
+              <option value="dui">Driving Under Influence (DUI) [+10 Points - Immediate Suspension]</option>
+              <option value="belt">No Seatbelt / Protective Helmet [+2 Demerit Points]</option>
+            </select>
+          </div>
 
-                <br>
+          <div>
+            <label for="recordedLocation">Recorded Duty Location</label>
+            <input type="text" id="recordedLocation" name="recordedLocation" value="Galle Road, Bambalapitiya" readonly>
+          </div>
 
-                <table width="100%" border="0" cellpadding="5" cellspacing="0">
-                  <tr>
-                    <td>
-                      <label for="notes">Incident Notes &amp; Evidence Description</label><br>
-                      <textarea id="notes" name="notes" rows="4" cols="65" placeholder="Input speed detector reading, driver response, or camera evidence tag..."></textarea>
-                    </td>
-                  </tr>
-                </table>
+          <div>
+            <label for="witnessOfficer">Witness / Nearby Officer Badge ID</label>
+            <input type="text" id="witnessOfficer" name="witnessOfficer" value="POL-84925" readonly>
+          </div>
 
-                <br>
+          <div>
+            <label for="notes">Officer Remarks &amp; Evidence Tag</label>
+            <textarea id="notes" name="notes" rows="3" placeholder="Enter radar speed reading or camera evidence reference..."></textarea>
+          </div>
 
-                <table width="100%" border="0" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td>
-                      <fieldset>
-                        <p align="left">
-                          <strong>Demerit Threshold Warning:</strong> Submitting this ticket will add designated penalty points. Exceeding 24 total points triggers automatic temporary license revocation.
-                        </p>
-                      </fieldset>
-                    </td>
-                  </tr>
-                </table>
+          <div class="alert-danger">
+            <strong>Demerit Limit Policy:</strong> Reaching or exceeding <strong>24 demerit points</strong> triggers an automatic license suspension order.
+          </div>
 
-                <br>
-
-                <table width="100%" border="0" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td align="center">
-                      <input type="submit" value="Confirm Citation &amp; Issue Summons" style="width: 100%; height: 35px;" disabled-css>
-                      <!-- Pure HTML submit button -->
-                      <button type="submit" value="Submit"><strong>Confirm Citation &amp; Issue Summons</strong></button>
-                    </td>
-                  </tr>
-                </table>
-              </form>
-              <br>
-            </fieldset>
-          </td>
-        </tr>
-      </table>
-      <br><br>
-    </center>
+          <button type="submit" class="btn-danger">Confirm Citation &amp; Apply Demerit Points</button>
+        </fieldset>
+      </form>
+    </section>
   </main>
+
+  <footer>
+    <p>&copy; 2026 TRAFFIX Central - Digital Summons Registry</p>
+  </footer>
 </body>
 </html>

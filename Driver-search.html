@@ -3,109 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
-  <title>Driver History Check - TRAFFIX</title>
+  <meta name="description" content="Driver License Violation History & Demerit Limit Audit">
+  <title>Driver History Check - TRAFFIX CENTRAL</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
-    <table width="100%" border="0" cellpadding="10" cellspacing="0">
-      <tr>
-        <td align="left">
-          <strong>TRAFFIX CENTRAL</strong>
-        </td>
-        <td align="right">
-          <nav aria-label="Main Navigation">
-            <a href="home.html">Home</a> &nbsp;&nbsp;&nbsp;
-            <a href="driver-search.html">Driver Check</a> &nbsp;&nbsp;&nbsp;
-            <a href="vehicle-scan.html">Vehicle ANPR</a> &nbsp;&nbsp;&nbsp;
-            <a href="add-violation.html">Add Violation</a> &nbsp;&nbsp;&nbsp;
-            <a href="login.html">Logout</a>
-          </nav>
-        </td>
-      </tr>
-    </table>
-    <hr size="2" color="black">
+    <h1>TRAFFIX CENTRAL</h1>
+    <nav>
+      <a href="home.html">Dashboard</a>
+      <a href="vehicle-scan.html">Vehicle ANPR</a>
+      <a href="driver-search.html" class="active">Driver Check</a>
+      <a href="add-violation.html">Add Violation</a>
+      <a href="index.html" class="btn-logout">Logout</a>
+    </nav>
   </header>
+
   <main>
-    <center>
-      <br>
-      <table border="0" cellpadding="0" cellspacing="0" width="60%">
-        <tr>
-          <td>
-            <fieldset>
-              <br>
-              <h2 align="left">Query Driver Profile &amp; Demerit Records</h2>
-              <p align="left">Input the Driver License Number or National Identity Card (NIC) to analyze habitual traffic violations.</p>
-              <form action="#" method="get">
-                <table width="100%" border="0" cellpadding="5" cellspacing="0">
-                  <tr>
-                    <td width="80%">
-                      <input type="text" name="driver_id" placeholder="B4920194" size="55" required>
-                    </td>
-                    <td align="right">
-                      <input type="submit" value="Search Profile">
-                    </td>
-                  </tr>
-                </table>
-              </form>
-              <br>
-            </fieldset>
-          </td>
-        </tr>
+    <aside class="duty-banner">
+      <div>
+        <strong>Officer:</strong> POL-84920 |
+        <strong>Location:</strong> Galle Road, Bambalapitiya |
+        <strong>Nearby Officer:</strong> POL-84925
+      </div>
+      <span class="status-pill">● CENTRAL DB CONNECTED</span>
+    </aside>
+
+    <section>
+      <h2>Driver License &amp; Repeat Offender Lookup</h2>
+      <p>Enter Driver License ID or NIC to audit historical offenses and demerit points.</p>
+
+      <form action="driver-search.html" method="get">
+        <label for="driverId">Driver License Number / NIC</label>
+        <input type="text" id="driverId" name="driverId" value="B4920194" required>
+        <button type="submit">Search Driver Record</button>
+      </form>
+    </section>
+
+    <section>
+      <h3>Driver Profile: K. A. Perera (License: B4920194)</h3>
+      <span class="badge-high-risk">HIGH RISK: 18 / 24 DEMERIT POINTS USED</span>
+
+      <table>
+        <caption>Historical Violation Audit Log</caption>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Violation Type</th>
+            <th>Location</th>
+            <th>Demerit Points</th>
+            <th>Fine Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>2026-08-12</td>
+            <td>Over-Speeding (&gt;80 km/h) - Repeat Offense</td>
+            <td>Southern Expressway (Km 42)</td>
+            <td>+4 pts</td>
+            <td>Unpaid</td>
+          </tr>
+          <tr>
+            <td>2026-05-04</td>
+            <td>Crossing Continuous Double White Line</td>
+            <td>Galle Road, Moratuwa</td>
+            <td>+3 pts</td>
+            <td>Settled</td>
+          </tr>
+          <tr>
+            <td>2026-02-18</td>
+            <td>Reckless Lane Departure / Drift</td>
+            <td>High Level Road, Nugegoda</td>
+            <td>+3 pts</td>
+            <td>Settled</td>
+          </tr>
+        </tbody>
       </table>
-      <br>
-      <table border="0" cellpadding="0" cellspacing="0" width="60%">
-        <tr>
-          <td>
-            <fieldset>
-              <br>
-              <p align="left"><strong>HIGH RISK: NEAR DEMERIT LIMIT</strong></p>
-              <table width="100%" border="0" cellpadding="5" cellspacing="10">
-                <tr>
-                  <td width="33%" align="center">
-                    <fieldset>
-                      <p>Total Recorded Offenses</p>
-                    </fieldset>
-                  </td>
-                  <td width="33%" align="center">
-                    <fieldset>
-                      <p>Demerit Points Accumulated</p>
-                    </fieldset>
-                  </td>
-                  <td width="33%" align="center">
-                    <fieldset>
-                      <p>Repeat Speeding Offenses</p>
-                    </fieldset>
-                  </td>
-                </tr>
-              </table>
-              <br>
-              <h4 align="left">Violation Audit Log</h4>
-              <table width="100%" border="0" cellpadding="8" cellspacing="0">
-                <thead>
-                  <tr align="left">
-                    <th>Date</th>
-                    <th>Violation Type</th>
-                    <th>Location</th>
-                    <th>Points</th>
-                    <th>Fine Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td colspan="5">
-                      <hr size="1" color="black">
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <br>
-            </fieldset>
-          </td>
-        </tr>
-      </table>
-      <br><br>
-    </center>
+    </section>
   </main>
+
+  <footer>
+    <p>&copy; 2026 TRAFFIX Central - Driver Demerit Ledger</p>
+  </footer>
 </body>
 </html>
