@@ -1,169 +1,165 @@
-/* Global Reset & Base Styles */
+:root {
+  --police-dark: #0b1d3a;
+  --police-blue: #1e3a8a;
+  --police-gold: #d97706;
+  --bg-gradient-1: #f1f5f9;
+  --bg-gradient-2: #e2e8f0;
+  --card-bg: #ffffff;
+  --text-main: #1f2937;
+  --text-heading: #0b1d3a;
+  --border-color: #cbd5e1;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-  background-color: #f4f6f9;
-  color: #333;
-  padding: 20px;
+  background: linear-gradient(135deg, var(--bg-gradient-1), var(--bg-gradient-2));
+  color: var(--text-main);
+  line-height: 1.6;
+  min-height: 100vh;
+  padding: 0;
+  margin: 0;
 }
 
 header {
-  text-align: center;
-  margin-bottom: 24px;
+  background: linear-gradient(135deg, var(--police-dark), var(--police-blue));
+  color: #ffffff;
+  padding: 15px 25px;
+  box-shadow: 0 4px 12px rgba(11, 29, 58, 0.25);
 }
 
-header h1 {
-  color: #1e3a8a;
+header strong {
+  font-size: 1.3rem;
+  letter-spacing: 0.5px;
+  color: #ffffff;
 }
 
-/* Responsive Grid Layout */
+header hr {
+  border: 0;
+  height: 2px;
+  background: linear-gradient(to right, var(--police-gold), transparent);
+  margin-top: 12px;
+}
+
+nav a {
+  color: #93c5fd;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+nav a:hover, nav strong a {
+  color: #ffffff;
+  background-color: rgba(217, 119, 6, 0.25);
+}
+
 main {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  max-width: 1200px;
+  padding: 30px 20px;
+  max-width: 1300px;
   margin: 0 auto;
 }
 
-/* Card Sections */
-section {
-  background: #ffffff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+h1, h2, h3, h4 {
+  color: var(--text-heading);
+  font-weight: 700;
 }
 
-section h2 {
-  color: #1e3a8a;
-  margin-bottom: 16px;
-  border-bottom: 2px solid #e2e8f0;
-  padding-bottom: 8px;
+h1 {
+  font-size: 2.2rem;
+  margin-bottom: 12px;
+  color: var(--police-blue);
 }
 
-/* Forms & Inputs */
-form {
-  margin-bottom: 16px;
-}
-
-label {
-  display: block;
-  font-weight: bold;
-  font-size: 0.9rem;
-  margin-bottom: 6px;
-}
-
-input[type="text"] {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+p {
+  color: #4b5563;
   font-size: 0.95rem;
+  margin-bottom: 12px;
 }
 
-input[type="text"]:focus {
-  border-color: #1e3a8a;
-  outline: none;
+fieldset {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-top: 4px solid var(--police-blue);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 10px 25px -5px rgba(11, 29, 58, 0.08), 0 8px 10px -6px rgba(11, 29, 58, 0.08);
+  margin-bottom: 20px;
+  transition: transform 0.2s ease;
 }
 
-/* Buttons */
-button {
-  padding: 9px 14px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 0.85rem;
-  transition: 0.2s ease-in-out;
+fieldset:hover {
+  transform: translateY(-2px);
 }
 
-button[type="submit"] {
-  background-color: #1e3a8a;
-  color: #fff;
-  margin-right: 6px;
-}
-
-button[type="submit"]:hover {
-  background-color: #172554;
-}
-
-button[type="button"] {
-  background-color: #e2e8f0;
-  color: #333;
-}
-
-button[type="button"]:hover {
-  background-color: #cbd5e1;
-}
-
-#btn-send-alerts {
-  background-color: #dc2626;
-  color: #fff;
-  width: 100%;
-  margin-top: 8px;
-}
-
-#btn-send-alerts:hover {
-  background-color: #b91c1c;
-}
-
-/* History & Database Display Panels */
-#license-history,
-#rmv-database,
-#checkpoint-module,
-#stolen-vehicle-module {
-  background-color: #f8fafc;
-  border: 1px dashed #cbd5e1;
+legend {
+  font-weight: 700;
+  color: var(--police-blue);
+  padding: 4px 12px;
+  background-color: #eff6ff;
   border-radius: 6px;
-  padding: 12px;
-  margin-top: 14px;
+  border: 1px solid #dbeafe;
 }
 
-#license-history h3,
-#rmv-database h3,
-#checkpoint-module h3,
-#stolen-vehicle-module h3 {
-  font-size: 1rem;
-  color: #475569;
-  margin-bottom: 8px;
+input[type="text"],
+input[type="password"],
+select,
+textarea {
+  width: 100%;
+  padding: 11px 14px;
+  margin-top: 6px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background-color: #ffffff;
+  color: var(--text-heading);
+  transition: all 0.3s ease;
 }
 
-#license-history p,
-#rmv-database p {
-  font-size: 0.9rem;
-  line-height: 1.6;
+input[type="text"]:focus,
+input[type="password"]:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--police-blue);
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.15);
 }
 
-/* Rule Warning Note */
-small {
-  display: block;
-  margin-top: 8px;
-  color: #b45309;
-  background-color: #fef3c7;
-  padding: 6px;
-  border-radius: 4px;
-  font-weight: bold;
+button, 
+input[type="submit"] {
+  background: linear-gradient(135deg, var(--police-blue), var(--police-dark));
+  color: #ffffff;
+  padding: 12px 22px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px rgba(30, 58, 138, 0.2);
 }
 
-/* Map Area Placeholder */
-#map {
-  height: 150px;
-  background-color: #e2e8f0;
-  border-radius: 4px;
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-  font-size: 0.85rem;
+button:hover, 
+input[type="submit"]:hover {
+  background: linear-gradient(135deg, var(--police-dark), var(--police-blue));
+  box-shadow: 0 6px 12px rgba(30, 58, 138, 0.3);
 }
 
-#map::after {
-  content: "Google Map View Container";
+a {
+  color: var(--police-blue);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: var(--police-gold);
 }
