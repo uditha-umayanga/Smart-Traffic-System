@@ -1,4 +1,4 @@
-CREATE DATABASE Smart_traffic_System;
+use Smart_traffic_System;
 
 CREATE TABLE Officers (
     BadgeID VARCHAR(20) PRIMARY KEY,
@@ -38,4 +38,5 @@ CREATE TABLE Violations (
     FineStatus VARCHAR(50) DEFAULT 'Unpaid', -- Unpaid, Settled
     ViolationDate DATETIME DEFAULT GETDATE()
 );
+
 
