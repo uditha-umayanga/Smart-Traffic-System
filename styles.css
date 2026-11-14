@@ -10,7 +10,87 @@
   padding: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
+/* Background Slideshow Container */
+    .bg-slideshow {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+      overflow: hidden;
+      background-color: #07192c;
+    }
 
+    .bg-slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      opacity: 0;
+      animation: slideAnimation 18s infinite ease-in-out;
+    }
+
+    /* Slide 1: Highway / Night Traffic */
+    .bg-slide:nth-child(1) {
+      background-image: url('images/slide1.jpg');
+      animation-delay: 0s;
+    }
+
+    /* Slide 2: City Traffic & Patrol Surveillance */
+    .bg-slide:nth-child(2) {
+      background-image: url('images/slide2.jpg');
+      animation-delay: 6s;
+    }
+
+    /* Slide 3: Expressway / Smart Road Monitoring */
+    .bg-slide:nth-child(3) {
+      background-image: url('images/slide2.jpg');
+      animation-delay: 12s;
+    }
+
+    /* Dark Navy Overlay so Login Form stays clear & readable */
+    .bg-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(7, 25, 44, 0.85) 0%, rgba(11, 25, 44, 0.78) 100%);
+      z-index: -1;
+    }
+
+    /* Smooth Crossfade & Subtle Zoom Animation */
+    @keyframes slideAnimation {
+      0% {
+        opacity: 0;
+        transform: scale(1);
+      }
+      10% {
+        opacity: 1;
+      }
+      33% {
+        opacity: 1;
+      }
+      43% {
+        opacity: 0;
+        transform: scale(1.06);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(1);
+      }
+    }
+
+    /* Slight Glass Effect for the Login Card over the Slideshow */
+    main.gate-container section {
+      background-color: rgba(30, 41, 59, 0.90);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
 body {
   background-color: #074661;
   background-image: linear-gradient(135deg, #074661 0%, #0b192c 100%);
