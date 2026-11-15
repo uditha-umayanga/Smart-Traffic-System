@@ -18,9 +18,9 @@
   <main class="gate-container">
     <section>
       <h2>Step 2: Duty Location &amp; Backup Officer Setup</h2>
-      <p>Allow browser location access to auto-detect your current GPS checkpoint, or enter it manually.</p>
+      <p>Allow browser location access to auto-detect your GPS checkpoint, or type it manually.</p>
 
-      <form action="home.html" method="get">
+      <form id="dutyForm">
         <fieldset>
           <legend>Active Duty Checkpoint Details</legend>
 
@@ -28,7 +28,7 @@
             <label for="dutyLocation">Current Duty Location / Checkpoint</label>
             <input type="text" id="dutyLocation" name="dutyLocation" placeholder="Detecting your GPS location..." required>
             <small id="gpsStatus" style="color: #38bdf8; display: block; margin-top: 6px;">Requesting GPS permission...</small>
-            <button type="button" onclick="getAutoLocation()" style="margin-top: 10px; background-color: #0284c7; padding: 8px 14px; font-size: 13px;">
+            <button type="button" id="refreshGps" style="margin-top: 10px; background-color: #0284c7; padding: 8px 14px; font-size: 13px;">
               Refresh / Auto-Detect GPS Location
             </button>
           </div>
@@ -39,19 +39,8 @@
           </div>
 
           <div>
-            <label for="patrolZone">Patrol Sector / Highway Zone</label>
-            <select id="patrolZone" name="patrolZone" required>
-              <option value="">-- Select Patrol Sector --</option>
-              <option value="A2">A2 Highway Corridor</option>
-              <option value="E01">E01 Southern Expressway</option>
-              <option value="A1">A1 Colombo - Kandy Road</option>
-              <option value="city">Colombo City Central Zone</option>
-            </select>
-          </div>
-
-          <div>
             <label for="nearbyOfficer">Nearby / Backup Officer Badge ID</label>
-            <input type="text" id="nearbyOfficer" name="nearbyOfficer" placeholder="e.g. POL-84925" required>
+            <input type="text" id="nearbyOfficer" name="nearbyOfficer" placeholder="Enter a registered Badge ID" required>
           </div>
 
           <button type="submit">Activate Duty Session &amp; Enter Dashboard</button>
@@ -64,65 +53,86 @@
     <p>&copy; 2026 TRAFFIX Central - Field Deployment System</p>
   </footer>
 
-  <!-- Auto-Location Detection Script -->
+  <script src="common.js"></script>
   <script>
-    function getAutoLocation() {
-      const locationInput = document.getElementById("dutyLocation");
-      const coordsInput = document.getElementById("gpsCoords");
-      const statusText = document.getElementById("gpsStatus");
+    const dutyForm = document.getElementById('dutyForm');
+    const dutyLocation = document.getElementById('dutyLocation');
+    const gpsCoords = document.getElementById('gpsCoords');
+    const nearbyOfficer = document.getElementById('nearbyOfficer');
+    const gpsStatus = document.getElementById('gpsStatus');
 
+    function setStatus(text, color) {
+      gpsStatus.textContent = text;
+      gpsStatus.style.color = color;
+    }
+
+    function getAutoLocation() {
       if (!navigator.geolocation) {
-        statusText.style.color = "#ef4444";
-        statusText.textContent = "Geolocation is not supported by your browser. Please type location manually.";
-        locationInput.placeholder = "Enter location manually";
+        setStatus('Geolocation is not supported by your browser. Please type location manually.', '#ef4444');
         return;
       }
-
-      statusText.style.color = "#38bdf8";
-      statusText.textContent = "Locating GPS coordinates... Please click 'Allow' if prompted.";
+      setStatus('Locating GPS coordinates... Please click "Allow" if prompted.', '#38bdf8');
 
       navigator.geolocation.getCurrentPosition(
-        async function (position) {
+        async (position) => {
           const lat = position.coords.latitude.toFixed(6);
           const lon = position.coords.longitude.toFixed(6);
-          coordsInput.value = `${lat}, ${lon}`;
+          gpsCoords.value = `${lat}, ${lon}`;
 
           try {
-            // Convert GPS Coordinates into a readable street/city name
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
             const data = await response.json();
-
-            if (data && data.display_name) {
-              // Extract clean short address
-              const addressParts = data.display_name.split(",").slice(0, 3).join(",");
-              locationInput.value = addressParts;
-            } else {
-              locationInput.value = `GPS Checkpoint (${lat}, ${lon})`;
-            }
-
-            statusText.style.color = "#34d399";
-            statusText.textContent = "● GPS Location Auto-Detected Successfully!";
+            dutyLocation.value = data && data.display_name
+              ? data.display_name.split(',').slice(0, 3).join(',')
+              : `GPS Checkpoint (${lat}, ${lon})`;
+            setStatus('● GPS location auto-detected successfully!', '#34d399');
           } catch (error) {
-            locationInput.value = `GPS Checkpoint (${lat}, ${lon})`;
-            statusText.style.color = "#34d399";
-            statusText.textContent = "● Coordinates captured (Offline address lookup).";
+            dutyLocation.value = `GPS Checkpoint (${lat}, ${lon})`;
+            setStatus('● Coordinates captured (address lookup unavailable).', '#34d399');
           }
         },
-        function (error) {
-          statusText.style.color = "#f59e0b";
-          locationInput.placeholder = "Enter location manually (e.g. Galle Road, Bambalapitiya)";
-          if (error.code === error.PERMISSION_DENIED) {
-            statusText.textContent = "Location permission denied. Please enter your duty location manually.";
-          } else {
-            statusText.textContent = "Unable to detect GPS automatically. Please enter location manually.";
-          }
+        (error) => {
+          dutyLocation.placeholder = 'Enter location manually (e.g. street or checkpoint name)';
+          setStatus(
+            error.code === error.PERMISSION_DENIED
+              ? 'Location permission denied. Please enter your duty location manually.'
+              : 'Unable to detect GPS automatically. Please enter location manually.',
+            '#f59e0b'
+          );
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );
     }
 
-    // Automatically run when the page loads
-    window.onload = getAutoLocation;
+    // If the officer already set a duty location, show it again
+    guardPage({ needDuty: false }).then(session => {
+      if (session && session.duty) {
+        dutyLocation.value = session.duty.dutyLocation;
+        gpsCoords.value = session.duty.gpsCoords || '';
+        nearbyOfficer.value = session.duty.nearbyOfficer;
+      }
+    });
+
+    document.getElementById('refreshGps').addEventListener('click', getAutoLocation);
+    window.addEventListener('load', () => { if (!dutyLocation.value) getAutoLocation(); });
+
+    dutyForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        await api('/api/duty', {
+          method: 'POST',
+          body: {
+            dutyLocation: dutyLocation.value,
+            gpsCoords: gpsCoords.value,
+            nearbyOfficer: nearbyOfficer.value
+          }
+        });
+        location.href = 'home.html';
+      } catch (err) {
+        if (err.status === 401) return location.replace('index.html');
+        alert(err.message);
+      }
+    });
   </script>
 </body>
 </html>

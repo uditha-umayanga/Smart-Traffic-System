@@ -24,18 +24,18 @@
         <strong>Authorized Admin Credentials:</strong> Use Special Admin ID <code>0000</code> and Password <code>0000</code> to unlock the registration module.
       </div>
 
-      <form action="register.html" method="get">
+      <form id="adminForm">
         <fieldset>
           <legend>Admin Verification</legend>
 
           <div>
             <label for="adminId">Special Admin ID</label>
-            <input type="text" id="adminId" name="adminId" pattern="0000" title="Enter valid Admin ID: 0000" placeholder="Enter Admin ID (0000)" required>
+            <input type="text" id="adminId" name="adminId" placeholder="Enter Admin ID (0000)" required>
           </div>
 
           <div>
             <label for="adminPass">Special Admin Password</label>
-            <input type="password" id="adminPass" name="adminPass" pattern="0000" title="Enter valid Admin Password: 0000" placeholder="Enter Admin Password (0000)" required>
+            <input type="password" id="adminPass" name="adminPass" placeholder="Enter Admin Password (0000)" required>
           </div>
 
           <button type="submit">Authenticate as Admin</button>
@@ -47,5 +47,24 @@
   <footer>
     <p>&copy; 2026 TRAFFIX Central - Administrative Control Unit</p>
   </footer>
+
+  <script src="common.js"></script>
+  <script>
+    document.getElementById('adminForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        await api('/api/admin/login', {
+          method: 'POST',
+          body: {
+            adminId: document.getElementById('adminId').value,
+            adminPass: document.getElementById('adminPass').value
+          }
+        });
+        location.href = 'register.html';
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  </script>
 </body>
 </html>

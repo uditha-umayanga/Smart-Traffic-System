@@ -6,11 +6,8 @@
   <meta name="description" content="TRAFFIX Central Police Officer Login Portal">
   <title>Officer Login - TRAFFIX CENTRAL</title>
   <link rel="stylesheet" href="styles.css">
-  <style>
-  </style>
 </head>
 <body>
-  <!-- Animated Background Slideshow -->
   <div class="bg-slideshow">
     <div class="bg-slide"></div>
     <div class="bg-slide"></div>
@@ -30,13 +27,13 @@
       <h2>Police Officer Login</h2>
       <p>Please sign in with your official Badge ID to activate your duty session.</p>
 
-      <form action="location-setup.html" method="get">
+      <form id="loginForm">
         <fieldset>
           <legend>Officer Authentication</legend>
 
           <div>
             <label for="badgeId">Officer Badge ID</label>
-            <input type="text" id="badgeId" name="badgeId" placeholder="e.g. POL-84920" required>
+            <input type="text" id="badgeId" name="badgeId" placeholder="Enter your Badge ID" required>
           </div>
 
           <div>
@@ -61,5 +58,29 @@
   <footer>
     <p>&copy; 2026 TRAFFIX Central - Traffic Police Enforcement Division</p>
   </footer>
+
+  <script src="common.js"></script>
+  <script>
+    const loginForm = document.getElementById('loginForm');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const button = loginForm.querySelector('button');
+      button.disabled = true;
+      try {
+        await api('/api/login', {
+          method: 'POST',
+          body: {
+            badgeId: document.getElementById('badgeId').value,
+            password: document.getElementById('officerPass').value
+          }
+        });
+        location.href = 'location-setup.html';
+      } catch (err) {
+        alert(err.message);
+        button.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>

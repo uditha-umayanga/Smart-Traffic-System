@@ -20,67 +20,35 @@
   </header>
 
   <main>
-    <aside class="duty-banner">
-      <div>
-        <strong>Officer:</strong> POL-84920 |
-        <strong>Location:</strong> Galle Road, Bambalapitiya |
-        <strong>Nearby Officer:</strong> POL-84925
-      </div>
-      <span class="status-pill">● ANPR CAMERA READY</span>
-    </aside>
+    <aside class="duty-banner" id="dutyBanner"></aside>
 
     <section>
       <h2>ANPR License Plate Camera Scanner</h2>
       <p>Capture vehicle registration plate or enter plate number manually to check vehicle compliance and violation history.</p>
 
       <figure>
-        <div class="plate-badge">WP CAA - 7892</div>
+        <div class="plate-badge" id="cameraPlate">NO PLATE</div>
         <figcaption>● LIVE OPTICAL CHARACTER RECOGNITION (OCR) LOCKED</figcaption>
       </figure>
 
-      <form action="vehicle-scan.html" method="get">
+      <form id="plateForm">
         <label for="plateInput">Manual Plate Verification / Override</label>
-        <input type="text" id="plateInput" name="plateInput" value="WP CAA-7892" required>
+        <input type="text" id="plateInput" name="plateInput" placeholder="Enter plate, e.g. WP CAA-7892" required>
         <button type="submit">Query Vehicle Registry</button>
       </form>
     </section>
 
-    <section>
+    <section id="result" hidden>
       <h3>Scanned Vehicle Compliance Report</h3>
-      <span class="badge-high-risk">ALERT: 2 UNPAID SUMMONS &amp; EXPIRED REVENUE LICENSE</span>
+      <span id="complianceAlert" class="status-pill"></span>
 
       <table>
         <caption>Vehicle &amp; Owner Details</caption>
-        <tbody>
-          <tr>
-            <th>Registration Plate</th>
-            <td><strong>WP CAA - 7892</strong></td>
-          </tr>
-          <tr>
-            <th>Vehicle Make &amp; Model</th>
-            <td>Toyota Prius (Pearl White)</td>
-          </tr>
-          <tr>
-            <th>Registered Owner</th>
-            <td>S. H. Wickramasinghe</td>
-          </tr>
-          <tr>
-            <th>Revenue License Status</th>
-            <td>Expired (June 2026)</td>
-          </tr>
-          <tr>
-            <th>Insurance Status</th>
-            <td>Valid (SLIC Comprehensive)</td>
-          </tr>
-          <tr>
-            <th>Pending Fine Balance</th>
-            <td>LKR 7,500.00</td>
-          </tr>
-        </tbody>
+        <tbody id="vehicleRows"></tbody>
       </table>
 
       <div class="grid-cards">
-        <a href="add-violation.html" class="btn-primary btn-danger">+ Issue Citation for WP CAA-7892</a>
+        <a href="#" id="issueLink" class="btn-primary btn-danger">+ Issue Citation for this Vehicle</a>
         <a href="driver-search.html" class="btn-primary">Inspect Driver Demerit Record</a>
       </div>
     </section>
@@ -89,5 +57,49 @@
   <footer>
     <p>&copy; 2026 TRAFFIX Central - ANPR Enforcement Module</p>
   </footer>
+
+  <script src="common.js"></script>
+  <script>
+    const plateForm = document.getElementById('plateForm');
+    const plateInput = document.getElementById('plateInput');
+    const cameraPlate = document.getElementById('cameraPlate');
+    const result = document.getElementById('result');
+
+    guardPage();
+
+    plateForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const plate = plateInput.value.trim();
+      if (!plate) return;
+
+      try {
+        const { vehicle: v, unpaidSummons } = await api('/api/vehicles/' + encodeURIComponent(plate));
+
+        cameraPlate.textContent = v.RegistrationPlate;
+
+        const alertEl = document.getElementById('complianceAlert');
+        alertEl.textContent = unpaidSummons > 0
+          ? `ALERT: ${unpaidSummons} UNPAID SUMMONS`
+          : 'NO UNPAID SUMMONS';
+        alertEl.className = unpaidSummons > 0 ? 'badge-high-risk' : 'status-pill';
+
+        document.getElementById('vehicleRows').innerHTML = `
+          <tr><th>Registration Plate</th><td>${esc(v.RegistrationPlate)}</td></tr>
+          <tr><th>Vehicle Make &amp; Model</th><td>${esc(v.MakeAndModel)}</td></tr>
+          <tr><th>Registered Owner</th><td>${esc(v.RegisteredOwner)}</td></tr>
+          <tr><th>Revenue License Status</th><td>${esc(v.RevenueLicenseStatus)}</td></tr>
+          <tr><th>Insurance Status</th><td>${esc(v.InsuranceStatus)}</td></tr>
+          <tr><th>Pending Fine Balance</th><td>LKR ${Number(v.PendingFineBalance).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</td></tr>`;
+
+        document.getElementById('issueLink').href =
+          'add-violation.html?vehNo=' + encodeURIComponent(v.RegistrationPlate);
+
+        result.hidden = false;
+      } catch (err) {
+        result.hidden = true;
+        alert(err.message);
+      }
+    });
+  </script>
 </body>
 </html>
