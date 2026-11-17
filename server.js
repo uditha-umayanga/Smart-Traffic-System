@@ -455,7 +455,6 @@ app.post('/save-violation', requireOfficer, requireDuty, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running at http://localhost:${PORT}`);
-  console.log(`Open http://localhost:${PORT}/index.html in your browser`);
 });
