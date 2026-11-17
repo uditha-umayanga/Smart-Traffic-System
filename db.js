@@ -1,17 +1,11 @@
 const sql = require('mssql/msnodesqlv8');
 
-<<<<<<< Updated upstream
 // Each computer sets its own server in the DB_CONNECTION_STRING environment variable.
 // Example (PowerShell):
 // $env:DB_CONNECTION_STRING="Driver={ODBC Driver 17 for SQL Server};Server=YOUR_SERVER;Database=Smart_traffic_System;Trusted_Connection=yes;"
 const connectionString =
   process.env.DB_CONNECTION_STRING ||
   'Driver={ODBC Driver 17 for SQL Server};Server=localhost;Database=Smart_traffic_System;Trusted_Connection=yes;';
-=======
-const config = {
-    connectionString: "Driver={ODBC Driver 17 for SQL Server};Server=(localdb)\MSSQLLocalDB;Database=Smart_traffic_System;Trusted_Connection=yes;"
-};
->>>>>>> Stashed changes
 
 const poolPromise = new sql.ConnectionPool({ connectionString })
   .connect()
