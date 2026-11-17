@@ -1,5 +1,21 @@
-# Dependencies (each person runs "npm install")
+# Node dependencies
 node_modules/
+
+# Python virtual environments & dependencies
+venv/
+.venv/
+env/
+anpr_service/venv/
+anpr_service/deps/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+*.so
+.pytest_cache/
+.mypy_cache/
 
 # Local settings and secrets
 .env
@@ -11,6 +27,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 *.log
+server.log
 
 # Editor and OS files
 .vscode/
@@ -19,6 +36,8 @@ yarn-error.log*
 Thumbs.db
 desktop.ini
 
-# Temporary files
+# Temporary & backup files
 *.tmp
 *.swp
+*_backup.js
+server_backup.js
