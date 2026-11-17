@@ -28,9 +28,23 @@
 
       <figure>
         <div class="plate-badge" id="cameraPlate">NO PLATE</div>
-        <figcaption>● LIVE OPTICAL CHARACTER RECOGNITION (OCR) LOCKED</figcaption>
+        <figcaption>● Live OCR processing — upload image or enter plate below</figcaption>
       </figure>
 
+      <form id="captureForm" enctype="multipart/form-data">
+        <label for="plateInput">Manual Plate Verification / Override</label>
+        <input type="text" id="plateInput" name="plateInput" placeholder="Enter plate, e.g. WP CAA-7892" required>
+        <button type="submit" formaction="/api/vehicles/" name="plateInput">Query Vehicle Registry</button>
+        <br><br>
+        <!-- Image Upload Form -->
+        <div style="margin-top: 10px;">
+          <label for="plateImage">Upload Plate Image (for OCR)</label>
+          <input type="file" id="plateImage" name="plateImage" accept="image/*" required>
+          <button type="submit" formaction="/api/scan" name="plateImage">Run OCR Scan</button>
+        </div>
+      </form>
+
+      <!-- Original manual form -->
       <form id="plateForm">
         <label for="plateInput">Manual Plate Verification / Override</label>
         <input type="text" id="plateInput" name="plateInput" placeholder="Enter plate, e.g. WP CAA-7892" required>
