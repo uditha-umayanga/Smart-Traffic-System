@@ -94,7 +94,13 @@ app.post('/api/login', async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 
+// Active duty checkpoints registry (badgeId -> duty info)
+const activeDutyCheckpoints = new Map();
+
 app.post('/api/logout', (req, res) => {
+  if (req.session && req.session.officer) {
+    activeDutyCheckpoints.delete(req.session.officer.badgeId);
+  }
   req.session.destroy(() => res.json({ ok: true }));
 });
 
@@ -130,8 +136,44 @@ app.post('/api/duty', requireOfficer, async (req, res) => {
       return res.status(400).json({ error: `Officer ${nearbyOfficer} is not registered.` });
     }
 
-    req.session.duty = { dutyLocation, gpsCoords, nearbyOfficer };
-    res.json({ ok: true });
+    const dutyRecord = {
+      dutyLocation,
+      gpsCoords,
+      nearbyOfficer,
+      updatedAt: new Date().toISOString()
+    };
+    req.session.duty = dutyRecord;
+
+    activeDutyCheckpoints.set(req.session.officer.badgeId, {
+      badgeId: req.session.officer.badgeId,
+      fullName: req.session.officer.fullName,
+      division: req.session.officer.division,
+      ...dutyRecord
+    });
+
+    res.json({ ok: true, duty: dutyRecord });
+  } catch (err) { fail(res, err); }
+});
+
+app.get('/api/checkpoints', requireOfficer, (req, res) => {
+  res.json({
+    currentDuty: req.session.duty || null,
+    currentOfficer: req.session.officer || null,
+    checkpoints: Array.from(activeDutyCheckpoints.values())
+  });
+});
+
+app.get('/api/violations/recent', requireOfficer, async (req, res) => {
+  const pool = await getPool(res);
+  if (!pool) return;
+  try {
+    const result = await pool.request().query(
+      `SELECT TOP 15 ViolationID, DriverID, RegistrationPlate, ViolationType,
+              DemeritPointsAdded, RecordedLocation, WitnessOfficerBadgeID, ViolationDate
+       FROM Violations
+       ORDER BY ViolationDate DESC`
+    );
+    res.json(result.recordset);
   } catch (err) { fail(res, err); }
 });
 

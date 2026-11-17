@@ -495,3 +495,332 @@ footer {
     font-size: 13px;
   }
 }
+
+/* ==========================================================================
+   13. Geospatial Map & Operational HUD Modules (Leaflet & Checkpoint Radar)
+   ========================================================================== */
+
+.dashboard-map-section {
+  margin-bottom: 28px;
+}
+
+.section-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.map-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.map-actions button,
+.map-actions a,
+.btn-sm {
+  width: auto !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 6px;
+  text-decoration: none;
+  gap: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-outline {
+  background: rgba(15, 23, 42, 0.7);
+  color: #38bdf8;
+  border: 1px solid #0284c7;
+}
+
+.btn-outline:hover {
+  background: rgba(2, 132, 199, 0.25);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background: #334155;
+  color: #f1f5f9;
+  border: 1px solid #475569;
+}
+
+.btn-secondary:hover {
+  background: #475569;
+  color: #ffffff;
+}
+
+/* Tactical Dark Mode Filter for OpenStreetMap tiles without any watermark */
+.dashboard-map-canvas.tactical-dark .leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) brightness(88%) contrast(90%);
+}
+
+/* Checkpoint HUD Summary Bar */
+.checkpoint-hud {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  background: #09131e;
+  border: 1px solid #1e293b;
+  border-left: 4px solid #38bdf8;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+}
+
+.hud-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hud-label {
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  color: #94a3b8;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.hud-value {
+  font-size: 14px;
+  color: #f8fafc;
+  word-break: break-word;
+}
+
+/* Map Canvas */
+.dashboard-map-canvas {
+  width: 100%;
+  height: 440px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  background: #0f172a;
+  position: relative;
+  z-index: 1;
+}
+
+#setupMap {
+  width: 100%;
+  height: 320px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  margin-top: 10px;
+  background: #0f172a;
+  position: relative;
+  z-index: 1;
+}
+
+/* Map Footer Bar */
+.map-footer-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.map-legend {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.active-dot {
+  background-color: #38bdf8;
+  box-shadow: 0 0 6px #38bdf8;
+}
+
+.radius-dot {
+  background-color: rgba(2, 132, 199, 0.5);
+  border: 1px dashed #38bdf8;
+}
+
+.incident-dot {
+  background-color: #ef4444;
+  box-shadow: 0 0 6px #ef4444;
+}
+
+.backup-dot {
+  background-color: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+/* Quick Location Presets Chips */
+.location-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  align-items: center;
+}
+
+.preset-chip {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #cbd5e1;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preset-chip:hover {
+  background: #0284c7;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+/* Radar Pulse Marker Animation */
+.checkpoint-pulse-container {
+  position: relative;
+  width: 32px;
+  height: 32px;
+}
+
+.checkpoint-radar-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  margin-top: -22px;
+  margin-left: -22px;
+  border-radius: 50%;
+  border: 2px solid #38bdf8;
+  background-color: rgba(56, 189, 248, 0.25);
+  animation: radarWave 2s infinite ease-out;
+  pointer-events: none;
+}
+
+.checkpoint-pin-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  margin-top: -11px;
+  margin-left: -11px;
+  background: #0284c7;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #ffffff;
+}
+
+@keyframes radarWave {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* Leaflet Dark Customizations */
+.leaflet-popup-content-wrapper {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1px solid #38bdf8;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+.leaflet-popup-tip {
+  background-color: #1e293b !important;
+  border: 1px solid #38bdf8;
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px !important;
+  font-family: inherit !important;
+}
+
+.map-popup-card h4 {
+  font-size: 14px;
+  color: #38bdf8;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 4px;
+}
+
+.map-popup-card p {
+  font-size: 12px;
+  color: #cbd5e1;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.map-popup-card .popup-badge {
+  display: inline-block;
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid #10b981;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+}
+
+.map-popup-card .popup-btn {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 5px 10px;
+  background-color: #dc2626;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.map-popup-card .popup-btn:hover {
+  background-color: #b91c1c;
+}
+
+.leaflet-bar a {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-bottom: 1px solid #334155 !important;
+}
+
+.leaflet-bar a:hover {
+  background-color: #334155 !important;
+  color: #38bdf8 !important;
+}
