@@ -1,7 +1,7 @@
-# Dependencies (everyone runs "npm install" to create this folder)
+# Dependencies (each person runs "npm install")
 node_modules/
 
-# Local settings and secrets (each computer has its own)
+# Local settings and secrets
 .env
 .env.local
 *.env
