@@ -170,7 +170,9 @@
       hudLocation.textContent = locText;
       hudCoords.textContent = `${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E`;
       hudOfficer.textContent = `${session.officer.fullName} (${session.officer.badgeId})`;
-      hudBackup.textContent = session.duty && session.duty.nearbyOfficer ? session.duty.nearbyOfficer : 'N/A';
+      hudBackup.textContent = session.duty && session.duty.nearbyOfficer
+        ? (session.duty.nearbyOfficerName ? `${session.duty.nearbyOfficer} (${session.duty.nearbyOfficerName})` : session.duty.nearbyOfficer)
+        : 'N/A';
       mapStatusText.textContent = `Surveillance locked at ${locText} (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
 
       // Initialize Leaflet Map
@@ -208,7 +210,7 @@
           <p><strong>GPS:</strong> ${lat.toFixed(6)}, ${lng.toFixed(6)}</p>
           <p><strong>Duty Officer:</strong> ${esc(session.officer.fullName)} (${esc(session.officer.badgeId)})</p>
           <p><strong>Division:</strong> ${esc(session.officer.division || 'Traffic Division')}</p>
-          <p><strong>Backup Witness:</strong> ${esc(session.duty.nearbyOfficer || 'Unassigned')}</p>
+          <p><strong>Backup Witness:</strong> ${esc(session.duty.nearbyOfficer || 'Unassigned')}${session.duty.nearbyOfficerName ? ` (${esc(session.duty.nearbyOfficerName)})` : ''}</p>
           <a href="add-violation.html" class="popup-btn">+ Issue Citation at this Checkpoint</a>
         </div>
       `;
