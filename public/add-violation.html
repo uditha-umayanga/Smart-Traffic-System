@@ -24,22 +24,22 @@
 
     <section>
       <h2>Record New Traffic Violation</h2>
-      <p>Enter the driver and vehicle from the registry. Demerit points are added to the driver's record automatically.</p>
+      <p>The vehicle plate is filled in from the ANPR scan. Enter the driver's licence number - if it is not in the registry yet, it is registered automatically. Demerit points are added to the driver's record.</p>
 
       <form id="violationForm">
         <fieldset>
           <legend>Citation &amp; Offense Details</legend>
 
           <div>
-            <label for="licNo">Driver License Number</label>
-            <input type="text" id="licNo" name="licNo" placeholder="Enter licence number" required>
-            <p id="driverStatus"></p>
+            <label for="vehNo">Vehicle Number (Plate) - from ANPR scan</label>
+            <input type="text" id="vehNo" name="vehNo" readonly required>
+            <p id="vehicleStatus"></p>
           </div>
 
           <div>
-            <label for="vehNo">Vehicle Number (Plate)</label>
-            <input type="text" id="vehNo" name="vehNo" placeholder="Enter plate number" required>
-            <p id="vehicleStatus"></p>
+            <label for="licNo">Driver License Number</label>
+            <input type="text" id="licNo" name="licNo" placeholder="Enter licence number" required>
+            <p id="driverStatus"></p>
           </div>
 
           <div>
@@ -97,6 +97,13 @@
     licInput.value = params.get('licNo') || '';
     vehInput.value = params.get('vehNo') || '';
 
+    // Violations are issued only after a plate scan, so go to the scanner when no plate is given
+    function goScan(message) {
+      if (message) alert(message);
+      const lic = licInput.value.trim();
+      location.replace('vehicle-scan.html' + (lic ? '?licNo=' + encodeURIComponent(lic) : ''));
+    }
+
     async function checkDriver() {
       const id = licInput.value.trim();
       if (!id) { driverStatus.textContent = ''; return; }
@@ -104,30 +111,36 @@
         const { driver: d } = await api('/api/drivers/' + encodeURIComponent(id));
         driverStatus.innerHTML = `Driver: <strong>${esc(d.FullName)}</strong> · Demerit points: ${esc(d.DemeritPoints)} / ${DEMERIT_LIMIT} · ${esc(d.RiskStatus)}`;
       } catch (err) {
-        driverStatus.innerHTML = `<span style="color:#fca5a5">${esc(err.message)}</span>`;
+        driverStatus.innerHTML = err.status === 404
+          ? `<span style="color:#fbbf24">New licence number - it will be registered automatically when you confirm the citation.</span>`
+          : `<span style="color:#fca5a5">${esc(err.message)}</span>`;
       }
     }
 
+    // Returns false (and sends the officer to the scanner) if the plate is not in the registry
     async function checkVehicle() {
       const plate = vehInput.value.trim();
-      if (!plate) { vehicleStatus.textContent = ''; return; }
       try {
         const { vehicle: v, unpaidSummons } = await api('/api/vehicles/' + encodeURIComponent(plate));
+        vehInput.value = v.RegistrationPlate;
         vehicleStatus.innerHTML = `Vehicle: <strong>${esc(v.MakeAndModel)}</strong> · Owner: ${esc(v.RegisteredOwner)} · Unpaid summonses: ${esc(unpaidSummons)}`;
+        return true;
       } catch (err) {
+        if (err.status === 404) { goScan('This plate is not in the vehicle registry. Please scan a registered vehicle first.'); return false; }
         vehicleStatus.innerHTML = `<span style="color:#fca5a5">${esc(err.message)}</span>`;
+        return false;
       }
     }
 
     licInput.addEventListener('blur', checkDriver);
-    vehInput.addEventListener('blur', checkVehicle);
 
     guardPage().then(session => {
       if (!session) return;
+      if (!vehInput.value.trim()) return goScan('Scan the vehicle plate in Vehicle ANPR first, then choose "Issue Citation for this Vehicle".');
       locationInput.value = session.duty.dutyLocation;
       witnessInput.value = session.duty.nearbyOfficer;
+      checkVehicle();
       if (licInput.value) checkDriver();
-      if (vehInput.value) checkVehicle();
     });
 
     violationForm.addEventListener('submit', async (e) => {
@@ -144,10 +157,13 @@
             notes: document.getElementById('notes').value
           }
         });
-        alert(`Violation recorded for ${data.plate}. +${data.points} demerit points applied.`);
+        let msg = `Violation recorded for ${data.plate}. +${data.points} demerit points applied.`;
+        if (data.newDriver) msg += `\nNew driver ${data.licNo} was registered.`;
+        alert(msg + '\nYou can now find it in Driver Check.');
         document.getElementById('violationType').value = '';
         document.getElementById('notes').value = '';
         checkDriver();
+        checkVehicle();
       } catch (err) {
         if (err.status === 401 || err.status === 409) return location.replace('location-setup.html');
         alert(err.message);

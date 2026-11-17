@@ -16,6 +16,8 @@ const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toSt
 // Demerit points per offence (must match the options in add-violation.html)
 const DEMERIT_POINTS = { speeding: 4, red_light: 3, lane_departure: 3, dui: 10, belt: 2 };
 const DEMERIT_LIMIT = 24;
+// Fine added to the vehicle's pending balance (LKR) per offence
+const FINE_AMOUNTS = { speeding: 2500, red_light: 2500, lane_departure: 2000, dui: 25000, belt: 1000 };
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -231,13 +233,13 @@ app.get('/api/vehicles/:plate', requireOfficer, async (req, res) => {
 
 // ---------- Add violation ----------
 app.post('/save-violation', requireOfficer, requireDuty, async (req, res) => {
-  const licNo = clean(req.body.licNo);
-  const vehNo = clean(req.body.vehNo);
+  const typedLic = clean(req.body.licNo);
+  const typedVeh = clean(req.body.vehNo);
   const violationType = clean(req.body.violationType);
   const notes = clean(req.body.notes);
   const duty = req.session.duty;
 
-  if (!licNo || !vehNo) {
+  if (!typedLic || !typedVeh) {
     return res.status(400).json({ error: 'Driver licence and vehicle plate are required.' });
   }
   if (!Object.prototype.hasOwnProperty.call(DEMERIT_POINTS, violationType)) {
@@ -249,22 +251,25 @@ app.post('/save-violation', requireOfficer, requireDuty, async (req, res) => {
   if (!pool) return;
 
   try {
+    // Driver: use the existing record, or create a new one from the typed licence number
     const driver = await pool.request()
-      .input('licNo', sql.VarChar, licNo)
+      .input('licNo', sql.VarChar, typedLic)
       .query('SELECT DriverID FROM Drivers WHERE DriverID = @licNo');
-    if (!driver.recordset.length) {
-      return res.status(404).json({ error: `Driver ${licNo} is not in the registry.` });
-    }
+    const newDriver = !driver.recordset.length;
+    const licNo = newDriver ? typedLic.toUpperCase() : driver.recordset[0].DriverID;
 
+    // Vehicle: must already be in the registry (violations are issued after an ANPR plate scan)
     const vehicle = await pool.request()
-      .input('vehNo', sql.VarChar, vehNo)
-      .query(`SELECT RegistrationPlate FROM Vehicles
+      .input('vehNo', sql.VarChar, typedVeh)
+      .query(`SELECT RegistrationPlate, RegisteredOwner FROM Vehicles
               WHERE REPLACE(REPLACE(UPPER(RegistrationPlate), ' ', ''), '-', '')
                   = REPLACE(REPLACE(UPPER(@vehNo), ' ', ''), '-', '')`);
     if (!vehicle.recordset.length) {
-      return res.status(404).json({ error: `Vehicle ${vehNo} is not in the registry.` });
+      return res.status(404).json({ error: `Vehicle ${typedVeh} is not in the registry. Scan the plate in Vehicle ANPR first.` });
     }
     const plate = vehicle.recordset[0].RegistrationPlate;
+    // A new licence number has no name yet, so the vehicle's registered owner is used
+    const driverName = vehicle.recordset[0].RegisteredOwner || 'Unknown Driver';
 
     const witness = await pool.request()
       .input('badge', sql.VarChar, duty.nearbyOfficer)
@@ -276,6 +281,14 @@ app.post('/save-violation', requireOfficer, requireDuty, async (req, res) => {
     const tx = new sql.Transaction(pool);
     await tx.begin();
     try {
+      if (newDriver) {
+        await new sql.Request(tx)
+          .input('licNo', sql.VarChar, licNo)
+          .input('name', sql.VarChar, driverName)
+          .query(`INSERT INTO Drivers (DriverID, FullName, DemeritPoints, RiskStatus)
+                  VALUES (@licNo, @name, 0, 'NORMAL');`);
+      }
+
       await new sql.Request(tx)
         .input('licNo', sql.VarChar, licNo)
         .input('plate', sql.VarChar, plate)
@@ -298,13 +311,20 @@ app.post('/save-violation', requireOfficer, requireDuty, async (req, res) => {
                                       THEN 'HIGH RISK' ELSE 'NORMAL' END
                 WHERE DriverID = @licNo;`);
 
+      await new sql.Request(tx)
+        .input('plate', sql.VarChar, plate)
+        .input('fine', sql.Decimal(10, 2), FINE_AMOUNTS[violationType])
+        .query(`UPDATE Vehicles
+                SET PendingFineBalance = ISNULL(PendingFineBalance, 0) + @fine
+                WHERE RegistrationPlate = @plate;`);
+
       await tx.commit();
     } catch (innerErr) {
       try { await tx.rollback(); } catch (_) { /* transaction may not have started */ }
       throw innerErr;
     }
 
-    res.json({ ok: true, plate, points });
+    res.json({ ok: true, plate, licNo, points, newDriver });
   } catch (err) { fail(res, err); }
 });
 
