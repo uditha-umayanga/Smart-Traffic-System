@@ -3,9 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="ANPR Vehicle License Plate Recognition Scanner">
-  <title>Vehicle ANPR Scan - TRAFFIX CENTRAL</title>
-  <link rel="stylesheet" href="styles.css"> 
+  <meta name="description" content="Vehicle ANPR - live number plate recognition">
+  <title>Vehicle ANPR - TRAFFIX CENTRAL</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    [hidden] { display: none !important; }
+    .anpr-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; }
+    @media (max-width: 800px) { .anpr-grid { grid-template-columns: 1fr; } }
+    .cam-box { position: relative; background: #000; border-radius: 8px; overflow: hidden; min-height: 220px;
+               display: grid; place-items: center; }
+    .cam-box video, .cam-box img { width: 100%; max-height: 420px; object-fit: contain; display: block; }
+    .cam-placeholder { color: #94a3b8; padding: 24px; text-align: center; }
+    .cam-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin-top: 12px; }
+    .detail-grid .wide { grid-column: 1 / -1; }
+    .plate-row { display: flex; gap: 8px; }
+    .plate-row input { flex: 1; min-width: 0; font-size: 1.4rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .scan-msg { min-height: 1.4em; margin: 10px 0 0; }
+    .err { color: #fca5a5; }
+    .ok { color: #86efac; }
+    #violationLink { display: inline-block; margin-top: 14px; }
+  </style>
 </head>
 <body>
   <header>
@@ -23,83 +41,338 @@
     <aside class="duty-banner" id="dutyBanner"></aside>
 
     <section>
-      <h2>ANPR License Plate Camera Scanner</h2>
-      <p>Capture vehicle registration plate or enter plate number manually to check vehicle compliance and violation history.</p>
+      <h2>Live Optical Character Recognition (ANPR)</h2>
+      <p>Start the live camera (phone or laptop) or upload a photo. The plate is read automatically and the vehicle details are filled in.</p>
 
-      <figure>
-        <div class="plate-badge" id="cameraPlate">NO PLATE</div>
-        <figcaption>● LIVE OPTICAL CHARACTER RECOGNITION (OCR) LOCKED</figcaption>
-      </figure>
+      <div class="anpr-grid">
+        <!-- ===== Scanner ===== -->
+        <div>
+          <div class="cam-box">
+            <video id="cam" playsinline muted hidden></video>
+            <img id="preview" alt="Uploaded vehicle photo" hidden>
+            <div id="camPlaceholder" class="cam-placeholder">Camera is off. Start the live camera or upload a photo.</div>
+          </div>
+          <canvas id="grab" hidden></canvas>
 
-      <form id="plateForm">
-        <label for="plateInput">Manual Plate Verification / Override</label>
-        <input type="text" id="plateInput" name="plateInput" placeholder="Enter plate, e.g. WP CAA-7892" required>
-        <button type="submit">Query Vehicle Registry</button>
-      </form>
-    </section>
+          <div class="cam-actions">
+            <button type="button" id="startCam">Start live camera</button>
+            <button type="button" id="stopCam" hidden>Stop camera</button>
+            <button type="button" id="switchCam" hidden>Switch camera</button>
+            <button type="button" id="uploadBtn">Upload / take photo</button>
+            <input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
+          </div>
+          <p id="scanStatus" class="scan-msg" role="status"></p>
+        </div>
 
-    <section id="result" hidden>
-      <h3>Scanned Vehicle Compliance Report</h3>
-      <span id="complianceAlert" class="status-pill"></span>
+        <!-- ===== Vehicle details (auto-filled) ===== -->
+        <div>
+          <label for="plateInput">Plate number</label>
+          <div class="plate-row">
+            <input type="text" id="plateInput" placeholder="WP CAB-1234" autocomplete="off">
+            <button type="button" id="lookupBtn">Search</button>
+          </div>
+          <p id="vehStatus" class="scan-msg" role="status"></p>
 
-      <table>
-        <caption>Vehicle &amp; Owner Details</caption>
-        <tbody id="vehicleRows"></tbody>
-      </table>
+          <div class="detail-grid">
+            <div class="wide">
+              <label for="fModel">Make &amp; model</label>
+              <input type="text" id="fModel" readonly>
+            </div>
+            <div class="wide">
+              <label for="fOwner">Registered owner</label>
+              <input type="text" id="fOwner" readonly>
+            </div>
+            <div>
+              <label for="fRevenue">Revenue licence</label>
+              <input type="text" id="fRevenue" readonly>
+            </div>
+            <div>
+              <label for="fInsurance">Insurance</label>
+              <input type="text" id="fInsurance" readonly>
+            </div>
+            <div>
+              <label for="fFines">Pending fines (Rs.)</label>
+              <input type="text" id="fFines" readonly>
+            </div>
+            <div>
+              <label for="fUnpaid">Unpaid summonses</label>
+              <input type="text" id="fUnpaid" readonly>
+            </div>
+          </div>
 
-      <div class="grid-cards">
-        <a href="#" id="issueLink" class="btn-primary btn-danger">+ Issue Citation for this Vehicle</a>
-        <a href="driver-search.html" class="btn-primary">Inspect Driver Demerit Record</a>
+          <a id="violationLink" href="add-violation.html" class="btn-danger" hidden>Record a violation for this vehicle</a>
+        </div>
       </div>
     </section>
   </main>
 
   <footer>
-    <p>&copy; 2026 TRAFFIX Central - ANPR Enforcement Module</p>
+    <p>&copy; 2026 TRAFFIX Central - Digital Summons Registry</p>
   </footer>
 
   <script src="common.js"></script>
   <script>
-    const plateForm = document.getElementById('plateForm');
-    const plateInput = document.getElementById('plateInput');
-    const cameraPlate = document.getElementById('cameraPlate');
-    const result = document.getElementById('result');
+    // ---------- Settings ----------
+    const LIVE_INTERVAL_MS = 1200;   // frame ekak server ekata yawana gaman
+    const CONFIRM_HITS = 2;          // same plate eka meka waraka read unoth confirm karanawa
+    const VOTE_WINDOW = 4;           // anthima frames kihayak balanawada
+    const MAX_SIDE = 1280;           // upload karana image eke maximum size (px)
 
-    guardPage();
+    const $ = id => document.getElementById(id);
+    const cam = $('cam'), preview = $('preview'), placeholder = $('camPlaceholder'), grab = $('grab');
+    const startBtn = $('startCam'), stopBtn = $('stopCam'), switchBtn = $('switchCam');
+    const uploadBtn = $('uploadBtn'), photoInput = $('photoInput');
+    const scanStatus = $('scanStatus'), vehStatus = $('vehStatus');
+    const plateInput = $('plateInput'), lookupBtn = $('lookupBtn'), violationLink = $('violationLink');
 
-    plateForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const plate = plateInput.value.trim();
-      if (!plate) return;
+    let stream = null, facing = 'environment', liveOn = false, busy = false, votes = [];
+    let currentBlob = null;
 
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const norm = p => String(p || '').replace(/[^A-Z0-9]/gi, '').toUpperCase();
+
+    function setScan(msg, cls) { scanStatus.className = 'scan-msg ' + (cls || ''); scanStatus.textContent = msg; }
+    function setVeh(html, cls) { vehStatus.className = 'scan-msg ' + (cls || ''); vehStatus.innerHTML = html; }
+
+    // ---------- Vehicle details ----------
+    function clearDetails() {
+      ['fModel', 'fOwner', 'fRevenue', 'fInsurance', 'fFines', 'fUnpaid'].forEach(id => { $(id).value = ''; });
+      violationLink.hidden = true;
+    }
+
+    function showResult(data) {
+      if (data.plate) {
+        plateInput.value = data.plate;
+      }
+      if (!data.vehicle) {
+        clearDetails();
+        setVeh(`Plate <strong>${esc(data.plate)}</strong> is not in the vehicle registry.`, 'err');
+        return;
+      }
+      const v = data.vehicle;
+      $('fModel').value = v.MakeAndModel ?? '';
+      $('fOwner').value = v.RegisteredOwner ?? '';
+      $('fRevenue').value = v.RevenueLicenseStatus ?? '';
+      $('fInsurance').value = v.InsuranceStatus ?? '';
+      $('fFines').value = Number(v.PendingFineBalance ?? 0).toFixed(2);
+      $('fUnpaid').value = data.unpaidSummons ?? 0;
+      violationLink.href = 'add-violation.html?vehNo=' + encodeURIComponent(v.RegistrationPlate);
+      violationLink.hidden = false;
+      setVeh('Vehicle details loaded.', 'ok');
+    }
+
+    // ---------- Server / AI ekata image eka yawanna ----------
+    async function sendImage(blob) {
+      // 1. Try Node backend (/api/scan-plate)
       try {
-        const { vehicle: v, unpaidSummons } = await api('/api/vehicles/' + encodeURIComponent(plate));
+        const fd = new FormData();
+        fd.append('image', blob, 'plate.jpg');
+        const url = (window.location.protocol === 'file:') ? 'http://localhost:3000/api/scan-plate' : '/api/scan-plate';
+        const res = await fetch(url, { method: 'POST', body: fd });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          return { status: res.status, ok: true, data };
+        }
+      } catch (e) {
+        console.warn('Backend proxy /api/scan-plate unavailable:', e.message);
+      }
 
-        cameraPlate.textContent = v.RegistrationPlate;
+      // 2. Direct fallback to Python FastAPI AI service (http://127.0.0.1:8000/api/scan)
+      try {
+        const aiFd = new FormData();
+        aiFd.append('image', blob, 'plate.jpg');
+        const aiRes = await fetch('http://127.0.0.1:8000/api/scan', { method: 'POST', body: aiFd });
+        const aiData = await aiRes.json().catch(() => ({}));
+        if (aiRes.ok && aiData.found) {
+          let vehicle = null;
+          let unpaidSummons = 0;
+          try {
+            const vData = await api('/api/vehicles/' + encodeURIComponent(aiData.plate));
+            vehicle = vData.vehicle;
+            unpaidSummons = vData.unpaidSummons || 0;
+          } catch (_) {}
 
-        const alertEl = document.getElementById('complianceAlert');
-        alertEl.textContent = unpaidSummons > 0
-          ? `ALERT: ${unpaidSummons} UNPAID SUMMONS`
-          : 'NO UNPAID SUMMONS';
-        alertEl.className = unpaidSummons > 0 ? 'badge-high-risk' : 'status-pill';
-
-        document.getElementById('vehicleRows').innerHTML = `
-          <tr><th>Registration Plate</th><td>${esc(v.RegistrationPlate)}</td></tr>
-          <tr><th>Vehicle Make &amp; Model</th><td>${esc(v.MakeAndModel)}</td></tr>
-          <tr><th>Registered Owner</th><td>${esc(v.RegisteredOwner)}</td></tr>
-          <tr><th>Revenue License Status</th><td>${esc(v.RevenueLicenseStatus)}</td></tr>
-          <tr><th>Insurance Status</th><td>${esc(v.InsuranceStatus)}</td></tr>
-          <tr><th>Pending Fine Balance</th><td>LKR ${Number(v.PendingFineBalance).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</td></tr>`;
-
-        document.getElementById('issueLink').href =
-          'add-violation.html?vehNo=' + encodeURIComponent(v.RegistrationPlate);
-
-        result.hidden = false;
+          return {
+            status: 200,
+            ok: true,
+            data: {
+              plate: vehicle ? vehicle.RegistrationPlate : aiData.plate,
+              confidence: aiData.confidence,
+              vehicle,
+              unpaidSummons
+            }
+          };
+        } else if (aiRes.ok && !aiData.found) {
+          return { status: 404, ok: false, data: { error: aiData.message || 'Could not find a number plate.' } };
+        }
       } catch (err) {
-        result.hidden = true;
-        alert(err.message);
+        console.error('Direct AI scan error:', err);
+      }
+
+      return { status: 500, ok: false, data: { error: 'Scan service unavailable. Make sure port 8000 is running.' } };
+    }
+
+    function toBlob(source, sw, sh) {
+      const scale = Math.min(1, MAX_SIDE / Math.max(sw, sh));
+      grab.width = Math.round(sw * scale);
+      grab.height = Math.round(sh * scale);
+      grab.getContext('2d').drawImage(source, 0, 0, grab.width, grab.height);
+      return new Promise(resolve => grab.toBlob(resolve, 'image/jpeg', 0.85));
+    }
+
+    // ---------- Live camera ----------
+    async function startCamera() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setScan('Live camera needs HTTPS (or localhost). Use "Upload / take photo" instead.', 'err');
+        return;
+      }
+      try {
+        stopCamera();
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: facing }, width: { ideal: 1280 } }, audio: false
+        });
+        cam.srcObject = stream;
+        await cam.play();
+        preview.hidden = true; placeholder.hidden = true; cam.hidden = false;
+        startBtn.hidden = true; stopBtn.hidden = false; switchBtn.hidden = false;
+        votes = []; clearDetails(); setVeh('');
+        setScan('Live: point the camera at the number plate...');
+        liveOn = true;
+        liveLoop();
+      } catch (err) {
+        setScan('Could not open the camera: ' + err.message, 'err');
+      }
+    }
+
+    function stopCamera() {
+      liveOn = false;
+      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+      cam.srcObject = null;
+      cam.hidden = true;
+      stopBtn.hidden = true; switchBtn.hidden = true; startBtn.hidden = false;
+      if (preview.hidden) placeholder.hidden = false;
+    }
+
+    async function liveLoop() {
+      while (liveOn) {
+        if (!busy && cam.readyState >= 2 && cam.videoWidth) {
+          busy = true;
+          try { await scanLiveFrame(); } catch (err) { setScan(err.message, 'err'); }
+          busy = false;
+        }
+        await sleep(LIVE_INTERVAL_MS);
+      }
+    }
+
+    async function scanLiveFrame() {
+      const blob = await toBlob(cam, cam.videoWidth, cam.videoHeight);
+      if (!liveOn || !blob) return;
+      currentBlob = blob;
+      const r = await sendImage(blob);
+      if (!liveOn) return;
+
+      if (r.status === 401 && window.location.protocol !== 'file:') return location.replace('index.html');
+      if (r.status === 404) {                       // plate eka hamu unne na, thawa balanawa
+        votes.push(null); votes = votes.slice(-VOTE_WINDOW);
+        setScan('Looking for a plate...');
+        return;
+      }
+      if (!r.ok) {                                  // service down wage serious error ekak
+        stopCamera();
+        setScan(r.data.error || 'Scan failed.', 'err');
+        return;
+      }
+
+      votes.push(norm(r.data.plate)); votes = votes.slice(-VOTE_WINDOW);
+      const same = votes.filter(v => v === norm(r.data.plate)).length;
+      setScan(`Reading ${r.data.plate} (${same}/${CONFIRM_HITS})...`);
+
+      if (same >= CONFIRM_HITS) {                   // confirm unama camera eka nawaththanawa
+        stopCamera();
+        setScan(`Plate confirmed: ${r.data.plate} (confidence ${Math.round((r.data.confidence || 0) * 100)}%). Check it matches the vehicle.`, 'ok');
+        showResult(r.data);
+      }
+    }
+
+    startBtn.addEventListener('click', startCamera);
+    stopBtn.addEventListener('click', () => { stopCamera(); setScan('Camera stopped.'); });
+    switchBtn.addEventListener('click', () => {
+      facing = facing === 'environment' ? 'user' : 'environment';
+      startCamera();
+    });
+    window.addEventListener('pagehide', stopCamera);
+
+    // ---------- Photo upload / take photo ----------
+    uploadBtn.addEventListener('click', () => photoInput.click());
+
+    photoInput.addEventListener('change', async () => {
+      const file = photoInput.files[0];
+      if (!file) return;
+      stopCamera();
+      clearDetails(); setVeh('');
+      preview.src = URL.createObjectURL(file);
+      preview.hidden = false; placeholder.hidden = true;
+      setScan('Scanning photo with AI model...');
+      uploadBtn.disabled = true;
+      try {
+        let blob = file;
+        try {                                        // loku phone photos resize karanawa (8MB limit nisa)
+          const bmp = await createImageBitmap(file);
+          blob = await toBlob(bmp, bmp.width, bmp.height);
+        } catch (_) { /* resize beri unoth original eka yawanawa */ }
+
+        currentBlob = blob;
+        const r = await sendImage(blob);
+        if (r.status === 401 && window.location.protocol !== 'file:') return location.replace('index.html');
+        if (r.status === 404) { setScan('Could not find a number plate. Try a clearer photo.', 'err'); return; }
+        if (!r.ok) { setScan(r.data.error || 'Scan failed.', 'err'); return; }
+
+        setScan(`Plate read: ${r.data.plate} (confidence ${Math.round((r.data.confidence || 0) * 100)}%). Check it matches the vehicle.`, 'ok');
+        showResult(r.data);
+      } catch (err) {
+        setScan(err.message, 'err');
+      } finally {
+        uploadBtn.disabled = false;
+        photoInput.value = '';
       }
     });
+
+    // ---------- Manual search ----------
+    async function manualLookup() {
+      const p = plateInput.value.trim();
+      if (!p) {
+        if (currentBlob) {
+          setVeh('Scanning uploaded photo with AI model...');
+          try {
+            const r = await sendImage(currentBlob);
+            if (r.ok && r.data.plate) {
+              setScan(`Plate read: ${r.data.plate} (confidence ${Math.round((r.data.confidence || 0) * 100)}%).`, 'ok');
+              showResult(r.data);
+              return;
+            } else {
+              setVeh(r.data?.error || 'Could not find a number plate.', 'err');
+              return;
+            }
+          } catch (err) {
+            setVeh(err.message, 'err');
+            return;
+          }
+        }
+        setVeh('Please enter a plate number or upload a photo.', 'err');
+        return;
+      }
+      clearDetails(); setVeh('Searching...');
+      try {
+        const { vehicle, unpaidSummons } = await api('/api/vehicles/' + encodeURIComponent(p));
+        showResult({ plate: vehicle.RegistrationPlate, vehicle, unpaidSummons });
+      } catch (err) {
+        setVeh(esc(err.message), 'err');
+      }
+    }
+    lookupBtn.addEventListener('click', manualLookup);
+    plateInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); manualLookup(); } });
+
+    guardPage();
   </script>
 </body>
 </html>
