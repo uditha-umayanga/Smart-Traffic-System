@@ -22,16 +22,3 @@ desktop.ini
 # Temporary files
 *.tmp
 *.swp
-
-# Python virtual environment (ANPR OCR service)
-anpr_service/venv/
-
-# Server runtime files
-server.log
-server_backup.js
-
-# Python package cache
-anpr_service/deps/
-
-# OCR model directory (generated at runtime)
-anpr_service/model/
