@@ -96,6 +96,6 @@ CREATE TABLE Violations (
 GO
 
 
-select * from Officers;
+select * from Vehicles;
 
 
