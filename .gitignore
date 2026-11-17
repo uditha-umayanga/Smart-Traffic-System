@@ -1,0 +1,24 @@
+# Dependencies (each person runs "npm install")
+node_modules/
+
+# Local settings and secrets
+.env
+.env.local
+*.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.swp

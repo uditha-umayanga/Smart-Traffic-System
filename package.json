@@ -1,0 +1,29 @@
+{
+  "name": "smart-traffic-system",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uditha-umayanga/Smart-Traffic-System.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/uditha-umayanga/Smart-Traffic-System/issues"
+  },
+  "homepage": "https://github.com/uditha-umayanga/Smart-Traffic-System#readme",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^5.3.0",
+    "express-session": "^1.18.2",
+    "msnodesqlv8": "^6.2.2",
+    "mssql": "^12.7.14"
+  }
+}

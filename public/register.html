@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Register New Traffic Police Officer">
+  <title>Register New Officer - TRAFFIX CENTRAL</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>TRAFFIX CENTRAL | OFFICER REGISTRATION</h1>
+    <nav>
+      <a href="index.html" class="btn-logout">Exit Admin Session</a>
+    </nav>
+  </header>
+
+  <main>
+    <aside class="duty-banner">
+      <div>
+        <strong>Active Session:</strong> Head System Administrator (ID: 0000)
+      </div>
+      <span class="status-pill">ADMIN PRIVILEGES ACTIVE</span>
+    </aside>
+
+    <section>
+      <h2>Register New Traffic Police Officer</h2>
+      <p>Complete the form below to issue a new Badge ID and system login credentials to an authorized officer.</p>
+
+      <form id="registerForm">
+        <fieldset>
+          <legend>Officer Personal &amp; Departmental Details</legend>
+
+          <div>
+            <label for="fullName">Officer Full Name (with Rank)</label>
+            <input type="text" id="fullName" name="fullName" placeholder="e.g. SI R. M. Dissanayake" required>
+          </div>
+
+          <div>
+            <label for="nicNo">National Identity Card (NIC) Number</label>
+            <input type="text" id="nicNo" name="nicNo" placeholder="e.g. 199512403892" required>
+          </div>
+
+          <div>
+            <label for="newBadgeId">Assign New Officer Badge ID</label>
+            <input type="text" id="newBadgeId" name="newBadgeId" placeholder="e.g. POL-90145" required>
+          </div>
+
+          <div>
+            <label for="division">Assigned Police Division / Station</label>
+            <select id="division" name="division" required>
+              <option value="">-- Select Police Division --</option>
+              <option value="Colombo Central Traffic Division">Colombo Central Traffic Division</option>
+              <option value="Southern Expressway Patrol Unit">Southern Expressway Patrol Unit</option>
+              <option value="Kandy Traffic Division">Kandy Traffic Division</option>
+              <option value="Galle Traffic Division">Galle Traffic Division</option>
+              <option value="Kurunegala Traffic Division">Kurunegala Traffic Division</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="newPass">Create Login Password / PIN</label>
+            <input type="password" id="newPass" name="newPass" placeholder="Assign password" required>
+          </div>
+
+          <div>
+            <label for="confirmPass">Confirm Login Password / PIN</label>
+            <input type="password" id="confirmPass" name="confirmPass" placeholder="Re-enter password" required>
+          </div>
+
+          <button type="submit">Complete Registration</button>
+        </fieldset>
+      </form>
+    </section>
+
+    <section>
+      <h3>Registered Officers (Live from Database)</h3>
+      <table>
+        <caption>Active Departmental Officer Registry</caption>
+        <thead>
+          <tr>
+            <th>Badge ID</th>
+            <th>Officer Name &amp; Rank</th>
+            <th>Assigned Division</th>
+            <th>Registered On</th>
+          </tr>
+        </thead>
+        <tbody id="officerTable">
+          <tr><td colspan="4">Loading...</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 TRAFFIX Central - Police Personnel Registry</p>
+  </footer>
+
+  <script src="common.js"></script>
+  <script>
+    const tbody = document.getElementById('officerTable');
+
+    async function loadOfficers() {
+      try {
+        const rows = await api('/api/officers');
+        tbody.innerHTML = rows.length
+          ? rows.map(o => `
+              <tr>
+                <td>${esc(o.BadgeID)}</td>
+                <td>${esc(o.FullName)}</td>
+                <td>${esc(o.Division)}</td>
+                <td>${esc(new Date(o.CreatedAt).toLocaleString())}</td>
+              </tr>`).join('')
+          : '<tr><td colspan="4">No officers registered yet.</td></tr>';
+      } catch (err) {
+        if (err.status === 401) return location.replace('admin-login.html');
+        tbody.innerHTML = `<tr><td colspan="4">Error: ${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const button = form.querySelector('button');
+      button.disabled = true;
+      try {
+        const v = id => document.getElementById(id).value;
+        await api('/api/officers', {
+          method: 'POST',
+          body: {
+            fullName: v('fullName'),
+            nicNo: v('nicNo'),
+            newBadgeId: v('newBadgeId'),
+            division: v('division'),
+            newPass: v('newPass'),
+            confirmPass: v('confirmPass')
+          }
+        });
+        alert('Officer registered successfully!');
+        form.reset();
+        loadOfficers();
+      } catch (err) {
+        if (err.status === 401) return location.replace('admin-login.html');
+        alert(err.message);
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    loadOfficers();
+  </script>
+</body>
+</html>

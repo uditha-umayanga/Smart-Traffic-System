@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ANPR Vehicle License Plate Recognition Scanner">
+  <title>Vehicle ANPR Scan - TRAFFIX CENTRAL</title>
+  <link rel="stylesheet" href="styles.css"> 
+</head>
+<body>
+  <header>
+    <h1>TRAFFIX CENTRAL</h1>
+    <nav>
+      <a href="home.html">Dashboard</a>
+      <a href="vehicle-scan.html" class="active">Vehicle ANPR</a>
+      <a href="driver-search.html">Driver Check</a>
+      <a href="add-violation.html">Add Violation</a>
+      <a href="index.html" class="btn-logout">Logout</a>
+    </nav>
+  </header>
+
+  <main>
+    <aside class="duty-banner" id="dutyBanner"></aside>
+
+    <section>
+      <h2>ANPR License Plate Camera Scanner</h2>
+      <p>Capture vehicle registration plate or enter plate number manually to check vehicle compliance and violation history.</p>
+
+      <figure>
+        <div class="plate-badge" id="cameraPlate">NO PLATE</div>
+        <figcaption>● LIVE OPTICAL CHARACTER RECOGNITION (OCR) LOCKED</figcaption>
+      </figure>
+
+      <form id="plateForm">
+        <label for="plateInput">Manual Plate Verification / Override</label>
+        <input type="text" id="plateInput" name="plateInput" placeholder="Enter plate, e.g. WP CAA-7892" required>
+        <button type="submit">Query Vehicle Registry</button>
+      </form>
+    </section>
+
+    <section id="result" hidden>
+      <h3>Scanned Vehicle Compliance Report</h3>
+      <span id="complianceAlert" class="status-pill"></span>
+
+      <table>
+        <caption>Vehicle &amp; Owner Details</caption>
+        <tbody id="vehicleRows"></tbody>
+      </table>
+
+      <div class="grid-cards">
+        <a href="#" id="issueLink" class="btn-primary btn-danger">+ Issue Citation for this Vehicle</a>
+        <a href="driver-search.html" class="btn-primary">Inspect Driver Demerit Record</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 TRAFFIX Central - ANPR Enforcement Module</p>
+  </footer>
+
+  <script src="common.js"></script>
+  <script>
+    const plateForm = document.getElementById('plateForm');
+    const plateInput = document.getElementById('plateInput');
+    const cameraPlate = document.getElementById('cameraPlate');
+    const result = document.getElementById('result');
+
+    guardPage();
+
+    plateForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const plate = plateInput.value.trim();
+      if (!plate) return;
+
+      try {
+        const { vehicle: v, unpaidSummons } = await api('/api/vehicles/' + encodeURIComponent(plate));
+
+        cameraPlate.textContent = v.RegistrationPlate;
+
+        const alertEl = document.getElementById('complianceAlert');
+        alertEl.textContent = unpaidSummons > 0
+          ? `ALERT: ${unpaidSummons} UNPAID SUMMONS`
+          : 'NO UNPAID SUMMONS';
+        alertEl.className = unpaidSummons > 0 ? 'badge-high-risk' : 'status-pill';
+
+        document.getElementById('vehicleRows').innerHTML = `
+          <tr><th>Registration Plate</th><td>${esc(v.RegistrationPlate)}</td></tr>
+          <tr><th>Vehicle Make &amp; Model</th><td>${esc(v.MakeAndModel)}</td></tr>
+          <tr><th>Registered Owner</th><td>${esc(v.RegisteredOwner)}</td></tr>
+          <tr><th>Revenue License Status</th><td>${esc(v.RevenueLicenseStatus)}</td></tr>
+          <tr><th>Insurance Status</th><td>${esc(v.InsuranceStatus)}</td></tr>
+          <tr><th>Pending Fine Balance</th><td>LKR ${Number(v.PendingFineBalance).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</td></tr>`;
+
+        document.getElementById('issueLink').href =
+          'add-violation.html?vehNo=' + encodeURIComponent(v.RegistrationPlate);
+
+        result.hidden = false;
+      } catch (err) {
+        result.hidden = true;
+        alert(err.message);
+      }
+    });
+  </script>
+</body>
+</html>

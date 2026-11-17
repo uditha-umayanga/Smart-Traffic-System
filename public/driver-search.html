@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Driver License Violation History & Demerit Limit Audit">
+  <title>Driver History Check - TRAFFIX CENTRAL</title>
+  <link rel="stylesheet" href="styles.css"> 
+</head>
+<body>
+  <header>
+    <h1>TRAFFIX CENTRAL</h1>
+    <nav>
+      <a href="home.html">Dashboard</a>
+      <a href="vehicle-scan.html">Vehicle ANPR</a>
+      <a href="driver-search.html" class="active">Driver Check</a>
+      <a href="add-violation.html">Add Violation</a>
+      <a href="index.html" class="btn-logout">Logout</a>
+    </nav>
+  </header>
+
+  <main>
+    <aside class="duty-banner" id="dutyBanner"></aside>
+
+    <section>
+      <h2>Driver License &amp; Repeat Offender Lookup</h2>
+      <p>Enter Driver License ID or NIC to audit historical offenses and demerit points.</p>
+
+      <form id="searchForm">
+        <label for="driverId">Driver License Number / NIC</label>
+        <input type="text" id="driverId" name="driverId" placeholder="Enter licence number" required>
+        <button type="submit">Search Driver Record</button>
+      </form>
+    </section>
+
+    <section id="result" hidden>
+      <h3 id="driverName"></h3>
+      <span id="riskBadge" class="badge-high-risk"></span>
+
+      <table>
+        <caption>Historical Violation Audit Log</caption>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Violation Type</th>
+            <th>Location</th>
+            <th>Demerit Points</th>
+            <th>Fine Status</th>
+          </tr>
+        </thead>
+        <tbody id="violationRows"></tbody>
+      </table>
+
+      <div class="grid-cards">
+        <a href="#" id="addLink" class="btn-primary btn-danger">+ Record New Violation for this Driver</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 TRAFFIX Central - Driver Demerit Ledger</p>
+  </footer>
+
+  <script src="common.js"></script>
+  <script>
+    const searchForm = document.getElementById('searchForm');
+    const driverInput = document.getElementById('driverId');
+    const result = document.getElementById('result');
+
+    async function search(id) {
+      try {
+        const { driver: d, violations } = await api('/api/drivers/' + encodeURIComponent(id));
+
+        document.getElementById('driverName').textContent =
+          `Driver Profile: ${d.FullName} (License: ${d.DriverID})`;
+
+        const badge = document.getElementById('riskBadge');
+        badge.textContent = `${d.RiskStatus}: ${d.DemeritPoints} / ${DEMERIT_LIMIT} DEMERIT POINTS USED`;
+
+        document.getElementById('addLink').href =
+          'add-violation.html?licNo=' + encodeURIComponent(d.DriverID);
+
+        document.getElementById('violationRows').innerHTML = violations.length
+          ? violations.map(v => `
+              <tr>
+                <td>${esc(new Date(v.ViolationDate).toLocaleString())}</td>
+                <td>${esc(VIOLATION_NAMES[v.ViolationType] || v.ViolationType)}</td>
+                <td>${esc(v.RecordedLocation)}</td>
+                <td>+${esc(v.DemeritPointsAdded)} pts</td>
+                <td>${esc(v.FineStatus)}</td>
+              </tr>`).join('')
+          : '<tr><td colspan="5">No violations recorded for this driver.</td></tr>';
+
+        result.hidden = false;
+      } catch (err) {
+        result.hidden = true;
+        alert(err.message);
+      }
+    }
+
+    const presetId = new URLSearchParams(location.search).get('licNo') || '';
+    driverInput.value = presetId;
+
+    guardPage().then(session => {
+      if (session && presetId) search(presetId);
+    });
+
+    searchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = driverInput.value.trim();
+      if (id) search(id);
+    });
+  </script>
+</body>
+</html>

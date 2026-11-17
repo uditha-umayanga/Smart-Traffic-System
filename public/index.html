@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="TRAFFIX Central Police Officer Login Portal">
+  <title>Officer Login - TRAFFIX CENTRAL</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="bg-slideshow">
+    <div class="bg-slide"></div>
+    <div class="bg-slide"></div>
+    <div class="bg-slide"></div>
+  </div>
+  <div class="bg-overlay"></div>
+
+  <header>
+    <h1>TRAFFIX CENTRAL</h1>
+    <nav>
+      <span>RESTRICTED ACCESS: AUTHORIZED POLICE PERSONNEL ONLY</span>
+    </nav>
+  </header>
+
+  <main class="gate-container">
+    <section>
+      <h2>Police Officer Login</h2>
+      <p>Please sign in with your official Badge ID to activate your duty session.</p>
+
+      <form id="loginForm">
+        <fieldset>
+          <legend>Officer Authentication</legend>
+
+          <div>
+            <label for="badgeId">Officer Badge ID</label>
+            <input type="text" id="badgeId" name="badgeId" placeholder="Enter your Badge ID" required>
+          </div>
+
+          <div>
+            <label for="officerPass">Security Password / PIN</label>
+            <input type="password" id="officerPass" name="officerPass" placeholder="Enter your password" required>
+          </div>
+
+          <button type="submit">Verify &amp; Proceed to Duty Location</button>
+        </fieldset>
+      </form>
+
+      <aside>
+        <div>
+          <strong>New Officer Account?</strong>
+          <p>Only the Head System Administrator can register new police officers.</p>
+        </div>
+        <a href="admin-login.html" class="btn-primary">Admin Login to Register Officer</a>
+      </aside>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 TRAFFIX Central - Traffic Police Enforcement Division</p>
+  </footer>
+
+  <script src="common.js"></script>
+  <script>
+    const loginForm = document.getElementById('loginForm');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const button = loginForm.querySelector('button');
+      button.disabled = true;
+      try {
+        await api('/api/login', {
+          method: 'POST',
+          body: {
+            badgeId: document.getElementById('badgeId').value,
+            password: document.getElementById('officerPass').value
+          }
+        });
+        location.href = 'location-setup.html';
+      } catch (err) {
+        alert(err.message);
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

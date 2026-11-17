@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="TRAFFIX Central Field Enforcement Dashboard">
+  <title>Enforcement Dashboard - TRAFFIX CENTRAL</title>
+  <link rel="stylesheet" href="styles.css"> 
+</head>
+<body>
+  <header>
+    <h1>TRAFFIX CENTRAL</h1>
+    <nav>
+      <a href="home.html" class="active">Dashboard</a>
+      <a href="vehicle-scan.html">Vehicle ANPR</a>
+      <a href="driver-search.html">Driver Check</a>
+      <a href="add-violation.html">Add Violation</a>
+      <a href="index.html" class="btn-logout">Logout</a>
+    </nav>
+  </header>
+
+  <main>
+    <aside class="duty-banner" id="dutyBanner"></aside>
+
+    <section>
+      <h2>Field Enforcement Operations</h2>
+      <p>Select an operational module below to scan vehicle plates, inspect driver demerit points, or log a new traffic offense.</p>
+
+      <div class="grid-cards">
+        <article>
+          <div>
+            <h3>1. Vehicle ANPR Scanner</h3>
+            <p>Scan vehicle license plates via camera to verify registration, revenue license, and unpaid fines.</p>
+          </div>
+          <a href="vehicle-scan.html" class="btn-primary">Open ANPR Scanner</a>
+        </article>
+
+        <article>
+          <div>
+            <h3>2. Driver History Lookup</h3>
+            <p>Query Driver License or NIC numbers to check repeat offenses and remaining demerit limits (24-point cap).</p>
+          </div>
+          <a href="driver-search.html" class="btn-primary">Check Driver Record</a>
+        </article>
+
+        <article>
+          <div>
+            <h3>3. Issue Traffic Citation</h3>
+            <p>Log a new violation directly into the central database and apply demerit points automatically.</p>
+          </div>
+          <a href="add-violation.html" class="btn-primary btn-danger">+ Record New Violation</a>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 TRAFFIX Central - Automated Traffic Enforcement System</p>
+  </footer>
+
+  <script src="common.js"></script>
+  <script>
+    guardPage();
+  </script>
+</body>
+</html>
+
