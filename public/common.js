@@ -8,6 +8,8 @@ const VIOLATION_NAMES = {
 };
 const DEMERIT_LIMIT = 24;
 
+const API_SERVER = window.location.protocol === 'file:' ? 'http://localhost:3000' : '';
+
 function esc(text) {
   const d = document.createElement('div');
   d.textContent = text ?? '';
@@ -20,7 +22,8 @@ async function api(url, options = {}) {
     init.headers['Content-Type'] = 'application/json';
     init.body = JSON.stringify(options.body);
   }
-  const res = await fetch(url, init);
+  const fullUrl = (url.startsWith('/') && API_SERVER) ? (API_SERVER + url) : url;
+  const res = await fetch(fullUrl, init);
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const err = new Error(data.error || `Request failed (${res.status})`);
@@ -32,24 +35,39 @@ async function api(url, options = {}) {
 
 function renderDutyBanner(session) {
   const el = document.getElementById('dutyBanner');
-  if (!el) return;
+  if (!el || !session || !session.officer) return;
   const d = session.duty;
+  const nearbyText = d
+    ? (d.nearbyOfficerName ? `${d.nearbyOfficer} (${d.nearbyOfficerName})` : d.nearbyOfficer)
+    : 'Not set';
+
   el.innerHTML = `
     <div>
       <strong>Officer:</strong> ${esc(session.officer.badgeId)} (${esc(session.officer.fullName)}) |
       <strong>Location:</strong> ${esc(d ? d.dutyLocation : 'Not set')} |
-      <strong>Nearby Officer:</strong> ${esc(d ? d.nearbyOfficer : 'Not set')}
+      <strong>Nearby Officer:</strong> ${esc(nearbyText)}
     </div>
     <span class="status-pill">● ${d ? 'DUTY SESSION ACTIVE' : 'NO DUTY SESSION'}</span>`;
 }
 
 // Makes sure the officer is logged in (and has set a duty location). Redirects otherwise.
 async function guardPage({ needDuty = true } = {}) {
-  const session = await api('/api/session');
-  if (!session.officer) { location.replace('index.html'); return null; }
-  if (needDuty && !session.duty) { location.replace('location-setup.html'); return null; }
-  renderDutyBanner(session);
-  return session;
+  try {
+    const session = await api('/api/session');
+    if (!session.officer) {
+      if (window.location.protocol !== 'file:') location.replace('index.html');
+      return null;
+    }
+    if (needDuty && !session.duty) {
+      if (window.location.protocol !== 'file:') location.replace('location-setup.html');
+      return null;
+    }
+    renderDutyBanner(session);
+    return session;
+  } catch (e) {
+    console.warn('Session check skipped:', e.message);
+    return null;
+  }
 }
 
 // Logout links end the server session
@@ -57,6 +75,6 @@ document.addEventListener('click', async (e) => {
   const link = e.target.closest('a.btn-logout');
   if (!link) return;
   e.preventDefault();
-  await api('/api/logout', { method: 'POST' }).catch(() => {});
+  await api('/api/logout', { method: 'POST' }).catch(() => { });
   location.href = 'index.html';
 });
