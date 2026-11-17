@@ -65,9 +65,6 @@
     const cameraPlate = document.getElementById('cameraPlate');
     const result = document.getElementById('result');
 
-    // Licence number passed on from Driver Check, kept through the plate scan
-    const carriedLic = new URLSearchParams(location.search).get('licNo') || '';
-
     guardPage();
 
     plateForm.addEventListener('submit', async (e) => {
@@ -95,8 +92,7 @@
           <tr><th>Pending Fine Balance</th><td>LKR ${Number(v.PendingFineBalance).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</td></tr>`;
 
         document.getElementById('issueLink').href =
-          'add-violation.html?vehNo=' + encodeURIComponent(v.RegistrationPlate) +
-          (carriedLic ? '&licNo=' + encodeURIComponent(carriedLic) : '');
+          'add-violation.html?vehNo=' + encodeURIComponent(v.RegistrationPlate);
 
         result.hidden = false;
       } catch (err) {
