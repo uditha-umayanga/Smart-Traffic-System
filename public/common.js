@@ -34,11 +34,15 @@ function renderDutyBanner(session) {
   const el = document.getElementById('dutyBanner');
   if (!el) return;
   const d = session.duty;
+  const nearbyText = d
+    ? (d.nearbyOfficerName ? `${d.nearbyOfficer} (${d.nearbyOfficerName})` : d.nearbyOfficer)
+    : 'Not set';
+
   el.innerHTML = `
     <div>
       <strong>Officer:</strong> ${esc(session.officer.badgeId)} (${esc(session.officer.fullName)}) |
       <strong>Location:</strong> ${esc(d ? d.dutyLocation : 'Not set')} |
-      <strong>Nearby Officer:</strong> ${esc(d ? d.nearbyOfficer : 'Not set')}
+      <strong>Nearby Officer:</strong> ${esc(nearbyText)}
     </div>
     <span class="status-pill">● ${d ? 'DUTY SESSION ACTIVE' : 'NO DUTY SESSION'}</span>`;
 }
@@ -57,6 +61,6 @@ document.addEventListener('click', async (e) => {
   const link = e.target.closest('a.btn-logout');
   if (!link) return;
   e.preventDefault();
-  await api('/api/logout', { method: 'POST' }).catch(() => {});
+  await api('/api/logout', { method: 'POST' }).catch(() => { });
   location.href = 'index.html';
 });

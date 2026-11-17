@@ -87,10 +87,30 @@ app.post('/api/logout', (req, res) => {
   req.session.destroy(() => res.json({ ok: true }));
 });
 
-app.get('/api/session', (req, res) => {
+app.get('/api/session', async (req, res) => {
+  let duty = req.session.duty || null;
+
+  // Fetch the latest nearby officer name from DB if duty is set and name is missing
+  if (duty && duty.nearbyOfficer && !duty.nearbyOfficerName) {
+    const pool = await poolPromise;
+    if (pool) {
+      try {
+        const r = await pool.request()
+          .input('id', sql.VarChar, duty.nearbyOfficer)
+          .query('SELECT FullName FROM Officers WHERE BadgeID = @id');
+        if (r.recordset.length) {
+          duty.nearbyOfficerName = r.recordset[0].FullName;
+          req.session.duty = duty;
+        }
+      } catch (e) {
+        console.error('Failed to lookup nearby officer name:', e);
+      }
+    }
+  }
+
   res.json({
     officer: req.session.officer || null,
-    duty: req.session.duty || null,
+    duty,
     isAdmin: !!req.session.isAdmin
   });
 });
@@ -113,16 +133,19 @@ app.post('/api/duty', requireOfficer, async (req, res) => {
   try {
     const found = await pool.request()
       .input('badgeId', sql.VarChar, nearbyOfficer)
-      .query('SELECT 1 AS ok FROM Officers WHERE BadgeID = @badgeId');
+      .query('SELECT FullName FROM Officers WHERE BadgeID = @badgeId');
 
     if (!found.recordset.length) {
       return res.status(400).json({ error: `Officer ${nearbyOfficer} is not registered.` });
     }
 
+    const nearbyOfficerName = found.recordset[0].FullName;
+
     const dutyRecord = {
       dutyLocation,
       gpsCoords,
       nearbyOfficer,
+      nearbyOfficerName,
       updatedAt: new Date().toISOString()
     };
     req.session.duty = dutyRecord;
