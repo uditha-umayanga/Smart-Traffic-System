@@ -94,14 +94,40 @@ app.post('/api/login', async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 
+// Active duty checkpoints registry (badgeId -> duty info)
+const activeDutyCheckpoints = new Map();
+
 app.post('/api/logout', (req, res) => {
+  if (req.session && req.session.officer) {
+    activeDutyCheckpoints.delete(req.session.officer.badgeId);
+  }
   req.session.destroy(() => res.json({ ok: true }));
 });
 
-app.get('/api/session', (req, res) => {
+app.get('/api/session', async (req, res) => {
+  let duty = req.session.duty || null;
+
+  // Fetch the latest nearby officer name from DB if duty is set and name is missing
+  if (duty && duty.nearbyOfficer && !duty.nearbyOfficerName) {
+    const pool = await poolPromise;
+    if (pool) {
+      try {
+        const r = await pool.request()
+          .input('id', sql.VarChar, duty.nearbyOfficer)
+          .query('SELECT FullName FROM Officers WHERE BadgeID = @id');
+        if (r.recordset.length) {
+          duty.nearbyOfficerName = r.recordset[0].FullName;
+          req.session.duty = duty;
+        }
+      } catch (e) {
+        console.error('Failed to lookup nearby officer name:', e);
+      }
+    }
+  }
+
   res.json({
     officer: req.session.officer || null,
-    duty: req.session.duty || null,
+    duty,
     isAdmin: !!req.session.isAdmin
   });
 });
@@ -124,14 +150,53 @@ app.post('/api/duty', requireOfficer, async (req, res) => {
   try {
     const found = await pool.request()
       .input('badgeId', sql.VarChar, nearbyOfficer)
-      .query('SELECT 1 AS ok FROM Officers WHERE BadgeID = @badgeId');
+      .query('SELECT FullName FROM Officers WHERE BadgeID = @badgeId');
 
     if (!found.recordset.length) {
       return res.status(400).json({ error: `Officer ${nearbyOfficer} is not registered.` });
     }
 
-    req.session.duty = { dutyLocation, gpsCoords, nearbyOfficer };
-    res.json({ ok: true });
+    const nearbyOfficerName = found.recordset[0].FullName;
+
+    const dutyRecord = {
+      dutyLocation,
+      gpsCoords,
+      nearbyOfficer,
+      nearbyOfficerName,
+      updatedAt: new Date().toISOString()
+    };
+    req.session.duty = dutyRecord;
+
+    activeDutyCheckpoints.set(req.session.officer.badgeId, {
+      badgeId: req.session.officer.badgeId,
+      fullName: req.session.officer.fullName,
+      division: req.session.officer.division,
+      ...dutyRecord
+    });
+
+    res.json({ ok: true, duty: dutyRecord });
+  } catch (err) { fail(res, err); }
+});
+
+app.get('/api/checkpoints', requireOfficer, (req, res) => {
+  res.json({
+    currentDuty: req.session.duty || null,
+    currentOfficer: req.session.officer || null,
+    checkpoints: Array.from(activeDutyCheckpoints.values())
+  });
+});
+
+app.get('/api/violations/recent', requireOfficer, async (req, res) => {
+  const pool = await getPool(res);
+  if (!pool) return;
+  try {
+    const result = await pool.request().query(
+      `SELECT TOP 15 ViolationID, DriverID, RegistrationPlate, ViolationType,
+              DemeritPointsAdded, RecordedLocation, WitnessOfficerBadgeID, ViolationDate
+       FROM Violations
+       ORDER BY ViolationDate DESC`
+    );
+    res.json(result.recordset);
   } catch (err) { fail(res, err); }
 });
 
@@ -390,7 +455,6 @@ app.post('/save-violation', requireOfficer, requireDuty, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running at http://localhost:${PORT}`);
-  console.log(`Open http://localhost:${PORT}/index.html in your browser`);
 });
