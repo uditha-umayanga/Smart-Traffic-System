@@ -1,0 +1,5 @@
+cd D:\Documents\Projects\Smart-Traffic-System
+.\anpr_service\venv\Scripts\Activate
+pip install fastapi uvicorn ultralytics opencv-python easyocr python-multipart
+cd anpr_service
+python -m uvicorn app:app --host 0.0.0.0 --port 8000
