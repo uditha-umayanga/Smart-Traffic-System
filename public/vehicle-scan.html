@@ -146,6 +146,7 @@
     function showResult(data) {
       if (data.plate) {
         plateInput.value = data.plate;
+        saveScannedData('vehNo', data.plate);
       }
       if (!data.vehicle) {
         clearDetails();
@@ -153,6 +154,7 @@
         return;
       }
       const v = data.vehicle;
+      saveScannedData('vehNo', v.RegistrationPlate);
       $('fModel').value = v.MakeAndModel ?? '';
       $('fOwner').value = v.RegisteredOwner ?? '';
       $('fRevenue').value = v.RevenueLicenseStatus ?? '';
@@ -383,7 +385,13 @@
     lookupBtn.addEventListener('click', manualLookup);
     plateInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); manualLookup(); } });
 
-    guardPage();
+    guardPage().then(session => {
+      const savedVeh = getScannedData('vehNo');
+      if (session && savedVeh && !plateInput.value) {
+        plateInput.value = savedVeh;
+        manualLookup();
+      }
+    });
   </script>
 </body>
 </html>

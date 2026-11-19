@@ -94,8 +94,9 @@
     const vehicleStatus = document.getElementById('vehicleStatus');
     const violationForm = document.getElementById('violationForm');
 
-    licInput.value = params.get('licNo') || '';
-    vehInput.value = params.get('vehNo') || '';
+    // URL parameter ekak nathnam sessionStorage eke save wechcha data auto-fill karanawa
+    licInput.value = params.get('licNo') || getScannedData('licNo');
+    vehInput.value = params.get('vehNo') || getScannedData('vehNo');
 
     async function checkDriver() {
       const id = licInput.value.trim();

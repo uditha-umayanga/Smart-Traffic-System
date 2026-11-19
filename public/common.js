@@ -10,6 +10,94 @@ const DEMERIT_LIMIT = 24;
 
 const API_SERVER = window.location.protocol === 'file:' ? 'http://localhost:3000' : '';
 
+// ---------- Auto-fill Session Storage Helpers ----------
+const SCAN_STORAGE_KEYS = {
+  vehNo: 'traffix_scanned_vehNo',
+  licNo: 'traffix_scanned_licNo'
+};
+
+function saveScannedData(key, value) {
+  if (value && String(value).trim()) {
+    sessionStorage.setItem(SCAN_STORAGE_KEYS[key], String(value).trim());
+  }
+}
+
+function getScannedData(key) {
+  return sessionStorage.getItem(SCAN_STORAGE_KEYS[key]) || '';
+}
+
+function clearAllScannedData() {
+  sessionStorage.removeItem(SCAN_STORAGE_KEYS.vehNo);
+  sessionStorage.removeItem(SCAN_STORAGE_KEYS.licNo);
+}
+
+// Navigation bar ekata "Clear Data" button eka ibema ekathu karanawa
+function injectClearDataButton() {
+  const nav = document.querySelector('header nav');
+  if (!nav || document.getElementById('navClearDataBtn')) return;
+
+  const logoutBtn = nav.querySelector('a.btn-logout, a[href="index.html"]');
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.id = 'navClearDataBtn';
+  clearBtn.className = 'btn-clear-data';
+  clearBtn.textContent = 'Clear Data';
+
+  clearBtn.addEventListener('click', () => {
+    clearAllScannedData();
+
+    // URL parameters (?vehNo=... / ?licNo=...) thiyenawanam ewa clean karanawa
+    if (window.location.search) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // Danata open wela thiyena page eke fill wechcha fields clear karanawa
+    const page = window.location.pathname.split('/').pop();
+    if (page === 'vehicle-scan.html') {
+      const plateInput = document.getElementById('plateInput');
+      if (plateInput) plateInput.value = '';
+      ['fModel', 'fOwner', 'fRevenue', 'fInsurance', 'fFines', 'fUnpaid'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      const preview = document.getElementById('preview');
+      const placeholder = document.getElementById('camPlaceholder');
+      const scanStatus = document.getElementById('scanStatus');
+      const vehStatus = document.getElementById('vehStatus');
+      const violationLink = document.getElementById('violationLink');
+      if (preview) { preview.src = ''; preview.hidden = true; }
+      if (placeholder) placeholder.hidden = false;
+      if (scanStatus) scanStatus.textContent = '';
+      if (vehStatus) vehStatus.textContent = '';
+      if (violationLink) violationLink.hidden = true;
+    } else if (page === 'driver-search.html') {
+      const driverInput = document.getElementById('driverId');
+      const result = document.getElementById('result');
+      if (driverInput) driverInput.value = '';
+      if (result) result.hidden = true;
+    } else if (page === 'add-violation.html') {
+      ['licNo', 'vehNo', 'violationType', 'notes'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      const dStatus = document.getElementById('driverStatus');
+      const vStatus = document.getElementById('vehicleStatus');
+      if (dStatus) dStatus.textContent = '';
+      if (vStatus) vStatus.textContent = '';
+    }
+
+    alert('Scanned vehicle & driver data cleared.');
+  });
+
+  if (logoutBtn) {
+    nav.insertBefore(clearBtn, logoutBtn);
+  } else {
+    nav.appendChild(clearBtn);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', injectClearDataButton);
+
 function esc(text) {
   const d = document.createElement('div');
   d.textContent = text ?? '';
@@ -75,6 +163,7 @@ document.addEventListener('click', async (e) => {
   const link = e.target.closest('a.btn-logout');
   if (!link) return;
   e.preventDefault();
+  clearAllScannedData();
   await api('/api/logout', { method: 'POST' }).catch(() => { });
   location.href = 'index.html';
 });
