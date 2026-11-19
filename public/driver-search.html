@@ -70,6 +70,7 @@
     async function search(id) {
       try {
         const { driver: d, violations } = await api('/api/drivers/' + encodeURIComponent(id));
+        saveScannedData('licNo', d.DriverID);
 
         document.getElementById('driverName').textContent =
           `Driver Profile: ${d.FullName} (License: ${d.DriverID})`;
@@ -98,7 +99,7 @@
       }
     }
 
-    const presetId = new URLSearchParams(location.search).get('licNo') || '';
+    const presetId = new URLSearchParams(location.search).get('licNo') || getScannedData('licNo');
     driverInput.value = presetId;
 
     guardPage().then(session => {
