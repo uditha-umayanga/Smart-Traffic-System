@@ -4,7 +4,17 @@ const path = require('path');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { sql, poolPromise } = require('./db');
+const multer = require('multer');
 
+const PLATE_SERVICE_URL = process.env.PLATE_SERVICE_URL || 'http://127.0.0.1:8000';
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024 },                       // 8MB
+  fileFilter: (req, file, cb) => cb(null, /^image\//.test(file.mimetype))
+});
+const uploadPlate = (req, res, next) =>
+  upload.single('image')(req, res, err =>
+    err ? res.status(400).json({ error: err.message }) : next());
 const app = express();
 const PORT = 3000;
 
@@ -19,6 +29,13 @@ const DEMERIT_LIMIT = 24;
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
@@ -77,14 +94,40 @@ app.post('/api/login', async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 
+// Active duty checkpoints registry (badgeId -> duty info)
+const activeDutyCheckpoints = new Map();
+
 app.post('/api/logout', (req, res) => {
+  if (req.session && req.session.officer) {
+    activeDutyCheckpoints.delete(req.session.officer.badgeId);
+  }
   req.session.destroy(() => res.json({ ok: true }));
 });
 
-app.get('/api/session', (req, res) => {
+app.get('/api/session', async (req, res) => {
+  let duty = req.session.duty || null;
+
+  // Fetch the latest nearby officer name from DB if duty is set and name is missing
+  if (duty && duty.nearbyOfficer && !duty.nearbyOfficerName) {
+    const pool = await poolPromise;
+    if (pool) {
+      try {
+        const r = await pool.request()
+          .input('id', sql.VarChar, duty.nearbyOfficer)
+          .query('SELECT FullName FROM Officers WHERE BadgeID = @id');
+        if (r.recordset.length) {
+          duty.nearbyOfficerName = r.recordset[0].FullName;
+          req.session.duty = duty;
+        }
+      } catch (e) {
+        console.error('Failed to lookup nearby officer name:', e);
+      }
+    }
+  }
+
   res.json({
     officer: req.session.officer || null,
-    duty: req.session.duty || null,
+    duty,
     isAdmin: !!req.session.isAdmin
   });
 });
@@ -107,14 +150,53 @@ app.post('/api/duty', requireOfficer, async (req, res) => {
   try {
     const found = await pool.request()
       .input('badgeId', sql.VarChar, nearbyOfficer)
-      .query('SELECT 1 AS ok FROM Officers WHERE BadgeID = @badgeId');
+      .query('SELECT FullName FROM Officers WHERE BadgeID = @badgeId');
 
     if (!found.recordset.length) {
       return res.status(400).json({ error: `Officer ${nearbyOfficer} is not registered.` });
     }
 
-    req.session.duty = { dutyLocation, gpsCoords, nearbyOfficer };
-    res.json({ ok: true });
+    const nearbyOfficerName = found.recordset[0].FullName;
+
+    const dutyRecord = {
+      dutyLocation,
+      gpsCoords,
+      nearbyOfficer,
+      nearbyOfficerName,
+      updatedAt: new Date().toISOString()
+    };
+    req.session.duty = dutyRecord;
+
+    activeDutyCheckpoints.set(req.session.officer.badgeId, {
+      badgeId: req.session.officer.badgeId,
+      fullName: req.session.officer.fullName,
+      division: req.session.officer.division,
+      ...dutyRecord
+    });
+
+    res.json({ ok: true, duty: dutyRecord });
+  } catch (err) { fail(res, err); }
+});
+
+app.get('/api/checkpoints', requireOfficer, (req, res) => {
+  res.json({
+    currentDuty: req.session.duty || null,
+    currentOfficer: req.session.officer || null,
+    checkpoints: Array.from(activeDutyCheckpoints.values())
+  });
+});
+
+app.get('/api/violations/recent', requireOfficer, async (req, res) => {
+  const pool = await getPool(res);
+  if (!pool) return;
+  try {
+    const result = await pool.request().query(
+      `SELECT TOP 15 ViolationID, DriverID, RegistrationPlate, ViolationType,
+              DemeritPointsAdded, RecordedLocation, WitnessOfficerBadgeID, ViolationDate
+       FROM Violations
+       ORDER BY ViolationDate DESC`
+    );
+    res.json(result.recordset);
   } catch (err) { fail(res, err); }
 });
 
@@ -202,18 +284,83 @@ app.get('/api/drivers/:id', requireOfficer, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 
-app.get('/api/vehicles/:plate', requireOfficer, async (req, res) => {
+app.post('/api/scan-plate', uploadPlate, async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No image uploaded.' });
+  }
+  try {
+    const fd = new FormData();
+    const blob = new Blob([req.file.buffer], { type: req.file.mimetype || 'image/jpeg' });
+    fd.append('image', blob, req.file.originalname || 'plate.jpg');
+
+    const resp = await fetch(`${PLATE_SERVICE_URL}/api/scan`, {
+      method: 'POST',
+      body: fd
+    });
+    const data = await resp.json().catch(() => ({}));
+
+    if (!data.found || !data.plate) {
+      return res.status(404).json({ error: data.message || 'Could not find a number plate. Try a clearer photo.' });
+    }
+
+    const rawPlate = data.plate;
+    const pool = await poolPromise;
+    let vehicle = null;
+    let unpaidSummons = 0;
+
+    if (pool) {
+      const cleanNorm = rawPlate.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      const withoutProv = cleanNorm.replace(/^(WP|CP|SP|NP|EP|NW|NC|UP|SG)/i, '');
+
+      const vehRes = await pool.request()
+        .input('norm', sql.VarChar, cleanNorm)
+        .input('noProv', sql.VarChar, withoutProv)
+        .query(`
+          SELECT RegistrationPlate, MakeAndModel, RegisteredOwner, RevenueLicenseStatus,
+                 InsuranceStatus, PendingFineBalance
+          FROM Vehicles
+          WHERE REPLACE(REPLACE(UPPER(RegistrationPlate), ' ', ''), '-', '') = @norm
+             OR REPLACE(REPLACE(UPPER(RegistrationPlate), ' ', ''), '-', '') LIKE '%' + @noProv
+        `);
+
+      if (vehRes.recordset.length) {
+        vehicle = vehRes.recordset[0];
+        const unpRes = await pool.request()
+          .input('plate', sql.VarChar, vehicle.RegistrationPlate)
+          .query(`SELECT COUNT(*) AS n FROM Violations WHERE RegistrationPlate = @plate AND FineStatus = 'Unpaid'`);
+        unpaidSummons = unpRes.recordset[0]?.n || 0;
+      }
+    }
+
+    res.json({
+      found: true,
+      plate: vehicle ? vehicle.RegistrationPlate : rawPlate,
+      confidence: data.confidence,
+      vehicle,
+      unpaidSummons
+    });
+  } catch (err) {
+    console.error('Scan plate proxy error:', err);
+    res.status(500).json({ error: 'AI recognition service is unavailable. Please check port 8000.' });
+  }
+});
+
+app.get('/api/vehicles/:plate', async (req, res) => {
   const pool = await getPool(res);
   if (!pool) return;
   try {
-    // Ignores spaces, dashes and letter case, so "WP CAA-7892" and "wpcaa7892" match
+    const raw = clean(req.params.plate);
+    const norm = raw.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    const withoutProv = norm.replace(/^(WP|CP|SP|NP|EP|NW|NC|UP|SG)/i, '');
+
     const vehicle = await pool.request()
-      .input('plate', sql.VarChar, clean(req.params.plate))
+      .input('norm', sql.VarChar, norm)
+      .input('noProv', sql.VarChar, withoutProv)
       .query(`SELECT RegistrationPlate, MakeAndModel, RegisteredOwner, RevenueLicenseStatus,
                      InsuranceStatus, PendingFineBalance
               FROM Vehicles
-              WHERE REPLACE(REPLACE(UPPER(RegistrationPlate), ' ', ''), '-', '')
-                  = REPLACE(REPLACE(UPPER(@plate), ' ', ''), '-', '')`);
+              WHERE REPLACE(REPLACE(UPPER(RegistrationPlate), ' ', ''), '-', '') = @norm
+                 OR REPLACE(REPLACE(UPPER(RegistrationPlate), ' ', ''), '-', '') LIKE '%' + @noProv`);
 
     if (!vehicle.recordset.length) {
       return res.status(404).json({ error: 'No vehicle found with this registration plate.' });
@@ -308,7 +455,6 @@ app.post('/save-violation', requireOfficer, requireDuty, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running at http://localhost:${PORT}`);
-  console.log(`Open http://localhost:${PORT}/index.html in your browser`);
 });

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="TRAFFIX Central Field Enforcement Dashboard">
   <title>Enforcement Dashboard - TRAFFIX CENTRAL</title>
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="styles.css"> 
 </head>
 <body>
@@ -22,6 +23,60 @@
   <main>
     <aside class="duty-banner" id="dutyBanner"></aside>
 
+    <!-- 1. Active Duty Checkpoint Map Module -->
+    <section class="dashboard-map-section">
+      <div class="section-header-flex">
+        <div>
+          <h2>Active Duty Checkpoint &amp; Surveillance Map</h2>
+          <p>Real-time geospatial visualization of your current duty checkpoint and active traffic surveillance perimeter.</p>
+        </div>
+        <div class="map-actions">
+          <button type="button" id="btnCenterMap" class="btn-sm btn-outline">🎯 Center Checkpoint</button>
+          <button type="button" id="btnToggleNight" class="btn-sm btn-outline">🌙 Tactical Night View</button>
+          <button type="button" id="btnToggleRadius" class="btn-sm btn-outline">⭕ 500m Perimeter</button>
+          <a href="location-setup.html" class="btn-sm btn-secondary">📍 Relocate / Update</a>
+        </div>
+      </div>
+
+      <!-- Live Checkpoint Status HUD -->
+      <div class="checkpoint-hud" id="checkpointHud">
+        <div class="hud-item">
+          <span class="hud-label">DUTY CHECKPOINT</span>
+          <strong class="hud-value" id="hudLocation">Resolving Location...</strong>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">GPS COORDINATES</span>
+          <strong class="hud-value" id="hudCoords">--</strong>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">ACTIVE OFFICER</span>
+          <strong class="hud-value" id="hudOfficer">--</strong>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">BACKUP WITNESS</span>
+          <strong class="hud-value" id="hudBackup">--</strong>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">PERIMETER STATUS</span>
+          <span class="status-pill" id="hudStatus">● ACTIVE ON PATROL</span>
+        </div>
+      </div>
+
+      <!-- Leaflet Map Canvas -->
+      <div id="dashboardMap" class="dashboard-map-canvas"></div>
+
+      <!-- Map Footer & Legend -->
+      <div class="map-footer-bar">
+        <small id="mapStatusText">Loading active checkpoint data...</small>
+        <div class="map-legend">
+          <span class="legend-item"><span class="legend-dot active-dot"></span> My Checkpoint (Radar)</span>
+          <span class="legend-item"><span class="legend-dot radius-dot"></span> 500m Enforcement Zone</span>
+          <span class="legend-item"><span class="legend-dot backup-dot"></span> Other Patrols</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Enforcement Operations Modules -->
     <section>
       <h2>Field Enforcement Operations</h2>
       <p>Select an operational module below to scan vehicle plates, inspect driver demerit points, or log a new traffic offense.</p>
@@ -58,10 +113,205 @@
     <p>&copy; 2026 TRAFFIX Central - Automated Traffic Enforcement System</p>
   </footer>
 
+  <script src="vendor/leaflet/leaflet.js"></script>
   <script src="common.js"></script>
   <script>
-    guardPage();
+    let map = null;
+    let checkpointMarker = null;
+    let perimeterCircle = null;
+    let showPerimeter = true;
+    let activeLat = 6.9271;
+    let activeLng = 79.8612;
+
+    const hudLocation = document.getElementById('hudLocation');
+    const hudCoords = document.getElementById('hudCoords');
+    const hudOfficer = document.getElementById('hudOfficer');
+    const hudBackup = document.getElementById('hudBackup');
+    const mapStatusText = document.getElementById('mapStatusText');
+    const btnCenterMap = document.getElementById('btnCenterMap');
+    const btnToggleRadius = document.getElementById('btnToggleRadius');
+
+    function parseCoordinates(coordStr) {
+      if (!coordStr || typeof coordStr !== 'string') return null;
+      const parts = coordStr.split(',').map(s => parseFloat(s.trim()));
+      if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        return [parts[0], parts[1]];
+      }
+      return null;
+    }
+
+    async function resolveCoords(dutyLocation, gpsCoords) {
+      const parsed = parseCoordinates(gpsCoords);
+      if (parsed) return parsed;
+
+      // Fallback: Geocode location name via Nominatim
+      if (dutyLocation && dutyLocation.trim()) {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(dutyLocation)}`);
+          const data = await res.json();
+          if (data && data.length > 0) {
+            return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+          }
+        } catch (e) {
+          console.warn('Nominatim geocode fallback error:', e);
+        }
+      }
+
+      // Default Sri Lanka checkpoint coordinates (Colombo)
+      return [6.9271, 79.8612];
+    }
+
+    function initDashboardMap(session, lat, lng) {
+      activeLat = lat;
+      activeLng = lng;
+
+      // Update HUD values
+      const locText = session.duty ? session.duty.dutyLocation : 'Checkpoint Active';
+      hudLocation.textContent = locText;
+      hudCoords.textContent = `${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E`;
+      hudOfficer.textContent = `${session.officer.fullName} (${session.officer.badgeId})`;
+      hudBackup.textContent = session.duty && session.duty.nearbyOfficer
+        ? (session.duty.nearbyOfficerName ? `${session.duty.nearbyOfficer} (${session.duty.nearbyOfficerName})` : session.duty.nearbyOfficer)
+        : 'N/A';
+      mapStatusText.textContent = `Surveillance locked at ${locText} (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+
+      // Initialize Leaflet Map
+      map = L.map('dashboardMap', {
+        center: [lat, lng],
+        zoom: 15
+      });
+
+      // OpenStreetMap standard tile layer (100% Free, NO API Key, NO Watermarks)
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      // Radar Pulse Marker Icon for Active Officer Checkpoint
+      const pulseIcon = L.divIcon({
+        className: 'checkpoint-pulse-container',
+        html: `
+          <div class="checkpoint-radar-ring"></div>
+          <div class="checkpoint-pin-core">🛡️</div>
+        `,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -18]
+      });
+
+      // Add Checkpoint Marker
+      checkpointMarker = L.marker([lat, lng], { icon: pulseIcon }).addTo(map);
+
+      // Popup card for checkpoint
+      const popupContent = `
+        <div class="map-popup-card">
+          <span class="popup-badge">● ACTIVE POLICE CHECKPOINT</span>
+          <h4>${esc(locText)}</h4>
+          <p><strong>GPS:</strong> ${lat.toFixed(6)}, ${lng.toFixed(6)}</p>
+          <p><strong>Duty Officer:</strong> ${esc(session.officer.fullName)} (${esc(session.officer.badgeId)})</p>
+          <p><strong>Division:</strong> ${esc(session.officer.division || 'Traffic Division')}</p>
+          <p><strong>Backup Witness:</strong> ${esc(session.duty.nearbyOfficer || 'Unassigned')}${session.duty.nearbyOfficerName ? ` (${esc(session.duty.nearbyOfficerName)})` : ''}</p>
+          <a href="add-violation.html" class="popup-btn">+ Issue Citation at this Checkpoint</a>
+        </div>
+      `;
+      checkpointMarker.bindPopup(popupContent).openPopup();
+
+      // 500m Enforcement Perimeter Circle
+      perimeterCircle = L.circle([lat, lng], {
+        radius: 500,
+        color: '#38bdf8',
+        fillColor: '#0284c7',
+        fillOpacity: 0.12,
+        weight: 1.5,
+        dashArray: '6, 6'
+      }).addTo(map);
+
+      // Fetch other active checkpoints
+      loadOtherCheckpoints(session.officer.badgeId);
+
+      // Invalidate map size after rendering to ensure proper tile display
+      setTimeout(() => map.invalidateSize(), 300);
+    }
+
+    async function loadOtherCheckpoints(myBadgeId) {
+      try {
+        const data = await api('/api/checkpoints');
+        if (!data || !data.checkpoints) return;
+
+        const otherIcon = L.divIcon({
+          className: 'checkpoint-pulse-container',
+          html: `<div class="checkpoint-pin-core" style="background:#059669; border-color:#34d399;">👮</div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+          popupAnchor: [0, -14]
+        });
+
+        data.checkpoints.forEach(cp => {
+          if (cp.badgeId === myBadgeId) return; // Skip own checkpoint (already added)
+          const coords = parseCoordinates(cp.gpsCoords);
+          if (coords) {
+            const m = L.marker(coords, { icon: otherIcon }).addTo(map);
+            m.bindPopup(`
+              <div class="map-popup-card">
+                <span class="popup-badge" style="background:rgba(5,150,105,0.2); color:#34d399; border-color:#059669;">● ACTIVE PATROL UNIT</span>
+                <h4>${esc(cp.dutyLocation)}</h4>
+                <p><strong>Officer:</strong> ${esc(cp.fullName)} (${esc(cp.badgeId)})</p>
+                <p><strong>Division:</strong> ${esc(cp.division)}</p>
+                <p><strong>Backup:</strong> ${esc(cp.nearbyOfficer)}</p>
+              </div>
+            `);
+          }
+        });
+      } catch (e) {
+        console.warn('Could not fetch other active checkpoints:', e);
+      }
+    }
+
+    // Button event listeners
+    btnCenterMap.addEventListener('click', () => {
+      if (map && checkpointMarker) {
+        map.flyTo([activeLat, activeLng], 15, { duration: 1.2 });
+        checkpointMarker.openPopup();
+      }
+    });
+
+    const btnToggleNight = document.getElementById('btnToggleNight');
+    let isNightMode = false;
+    btnToggleNight.addEventListener('click', () => {
+      const mapEl = document.getElementById('dashboardMap');
+      isNightMode = !isNightMode;
+      if (isNightMode) {
+        mapEl.classList.add('tactical-dark');
+        btnToggleNight.textContent = '☀️ Normal Street View';
+      } else {
+        mapEl.classList.remove('tactical-dark');
+        btnToggleNight.textContent = '🌙 Tactical Night View';
+      }
+    });
+
+    btnToggleRadius.addEventListener('click', () => {
+      if (!perimeterCircle || !map) return;
+      showPerimeter = !showPerimeter;
+      if (showPerimeter) {
+        perimeterCircle.addTo(map);
+        btnToggleRadius.textContent = '⭕ Toggle 500m Perimeter';
+      } else {
+        map.removeLayer(perimeterCircle);
+        btnToggleRadius.textContent = '➕ Show 500m Perimeter';
+      }
+    });
+
+    // Guard page and initialize dashboard
+    guardPage().then(async session => {
+      if (!session) return;
+      const duty = session.duty || {};
+      const [lat, lng] = await resolveCoords(duty.dutyLocation, duty.gpsCoords);
+      initDashboardMap(session, lat, lng);
+    });
+
+    window.addEventListener('resize', () => {
+      if (map) map.invalidateSize();
+    });
   </script>
 </body>
 </html>
-
