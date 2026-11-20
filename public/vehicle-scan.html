@@ -128,9 +128,18 @@
       e.preventDefault();
       const plate = plateInput.value.trim();
       if (!plate) return;
+            $('stolenBanner').hidden = true;
 
       try {
-        const { vehicle: v, unpaidSummons } = await api('/api/vehicles/' + encodeURIComponent(plate));
+               const { vehicle: v, unpaidSummons, stolen } = await api('/api/vehicles/' + encodeURIComponent(plate));
+        showStolen(stolen, plate);
+
+        // Not in the vehicle registry, but it is on the stolen list
+        if (!v) {
+          result.hidden = true;
+          cameraPlate.textContent = stolen ? stolen.RegistrationPlate : plate;
+          return;
+        }
 
         cameraPlate.textContent = v.RegistrationPlate;
 
