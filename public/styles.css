@@ -494,4 +494,108 @@ footer {
     padding: 10px;
     font-size: 13px;
   }
+
+/* ==========================================================================
+   14. Stolen Vehicle Alerts & Register
+   ========================================================================== */
+.stolen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(127, 0, 0, 0.88);
+  animation: stolenFlash 0.9s infinite alternate;
+}
+.stolen-overlay[hidden] { display: none !important; }
+@keyframes stolenFlash {
+  from { background: rgba(127, 0, 0, 0.88); }
+  to   { background: rgba(220, 38, 38, 0.92); }
+}
+.stolen-modal {
+  width: 100%;
+  max-width: 460px;
+  background: #7f1d1d;
+  border: 3px solid #fecaca;
+  border-radius: 14px;
+  padding: 26px 22px;
+  text-align: center;
+  color: #ffffff;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+}
+.stolen-modal .stolen-icon { font-size: 46px; line-height: 1; }
+.stolen-modal h2 {
+  color: #ffffff;
+  font-size: 26px;
+  letter-spacing: 1px;
+  margin: 10px 0 6px;
+  border: none;
+}
+.stolen-modal .stolen-lead { font-size: 17px; font-weight: 700; margin-bottom: 12px; color: #fee2e2; }
+.stolen-modal .stolen-plate {
+  display: inline-block;
+  background: #ffffff;
+  color: #991b1b;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  padding: 6px 18px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+.stolen-modal dl {
+  text-align: left;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+.stolen-modal dt { color: #fecaca; font-size: 12px; text-transform: uppercase; margin-top: 6px; }
+.stolen-modal dd { margin: 0; font-weight: 600; }
+.stolen-modal .stolen-advice { font-size: 13px; color: #fee2e2; margin-bottom: 16px; }
+.stolen-modal button { background: #ffffff; color: #991b1b; }
+.stolen-modal button:hover { background: #fee2e2; }
+
+.stolen-banner {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: #dc2626;
+  color: #ffffff;
+  border: 2px solid #fecaca;
+  border-radius: 8px;
+  font-weight: 700;
+  animation: stolenPulse 1.2s infinite alternate;
+}
+.stolen-banner[hidden] { display: none !important; }
+.stolen-banner small { display: block; font-weight: 500; margin-top: 4px; color: #fee2e2; }
+@keyframes stolenPulse {
+  from { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  to   { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+}
+.stolen-inline {
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: #dc2626;
+  color: #ffffff;
+  border-radius: 6px;
+  font-weight: 700;
+  display: inline-block;
+}
+.badge-stolen, .badge-recovered {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  color: #ffffff;
+}
+.badge-stolen { background: #dc2626; }
+.badge-recovered { background: #059669; }
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+@media (max-width: 700px) { .form-grid-2 { grid-template-columns: 1fr; } }
+.filter-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.filter-row select { width: auto; min-width: 200px; }
 }
