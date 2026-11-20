@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Stolen Vehicle Register">
+  <title>Stolen Vehicles - TRAFFIX CENTRAL</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>TRAFFIX CENTRAL</h1>
+    <nav>
+      <a href="home.html">Dashboard</a>
+      <a href="vehicle-scan.html">Vehicle ANPR</a>
+      <a href="stolen-vehicles.html" class="active">Stolen Vehicles</a>
+      <a href="driver-search.html">Driver Check</a>
+      <a href="add-violation.html">Add Violation</a>
+      <a href="index.html" class="btn-logout">Logout</a>
+    </nav>
+  </header>
+
+  <main>
+    <aside class="duty-banner" id="dutyBanner"></aside>
+
+    <section>
+      <h2>Report Stolen Vehicle</h2>
+      <p>Add a stolen vehicle by its plate number. The vehicle does not need to be in the vehicle registry. When any checkpoint scans this plate with the ANPR scanner, a red stolen vehicle alert is shown.</p>
+
+      <form id="stolenForm">
+        <fieldset>
+          <legend>Stolen Vehicle Details</legend>
+
+          <div>
+            <label for="plate">Plate number *</label>
+            <input type="text" id="plate" placeholder="CAB-1234" maxlength="20" autocomplete="off" required>
+          </div>
+
+          <div class="form-grid-2">
+            <div>
+              <label for="makeAndModel">Make &amp; model</label>
+              <input type="text" id="makeAndModel" placeholder="Toyota Aqua" maxlength="100">
+            </div>
+            <div>
+              <label for="colour">Colour</label>
+              <input type="text" id="colour" placeholder="White" maxlength="50">
+            </div>
+            <div>
+              <label for="ownerName">Owner name</label>
+              <input type="text" id="ownerName" maxlength="150">
+            </div>
+            <div>
+              <label for="complaintNo">Police complaint no.</label>
+              <input type="text" id="complaintNo" maxlength="50">
+            </div>
+          </div>
+
+          <div>
+            <label for="details">Other details</label>
+            <textarea id="details" rows="3" maxlength="500" placeholder="Date and place it was stolen, special marks, etc."></textarea>
+          </div>
+
+          <p id="formStatus" role="status"></p>
+          <button type="submit" class="btn-danger">Add to Stolen Vehicle List</button>
+        </fieldset>
+      </form>
+    </section>
+
+    <section>
+      <h2>Stolen Vehicle List</h2>
+      <div class="filter-row">
+        <select id="statusFilter" aria-label="Filter list">
+          <option value="active">Still stolen only</option>
+          <option value="all">All records (including recovered)</option>
+        </select>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Plate</th>
+            <th>Vehicle</th>
+            <th>Owner</th>
+            <th>Complaint No.</th>
+            <th>Reported</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="rows"><tr><td colspan="7">Loading...</td></tr></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 TRAFFIX Central - Stolen Vehicle Register</p>
+  </footer>
+
+  <script src="common.js"></script>
+  <script>
+    const $ = id => document.getElementById(id);
+    const form = $('stolenForm'), formStatus = $('formStatus'), rows = $('rows'), filter = $('statusFilter');
+
+    async function loadList() {
+      try {
+        const list = await api('/api/stolen?status=' + (filter.value === 'all' ? 'all' : 'active'));
+        rows.innerHTML = list.length ? list.map(r => {
+          const veh = [r.MakeAndModel, r.Colour].filter(Boolean).join(' · ') || '-';
+          const isStolen = r.Status === 'Stolen';
+          return `<tr>
+            <td><strong>${esc(r.RegistrationPlate)}</strong></td>
+            <td>${esc(veh)}</td>
+            <td>${esc(r.OwnerName || '-')}</td>
+            <td>${esc(r.ComplaintNo || '-')}</td>
+            <td>${esc(new Date(r.ReportedAt).toLocaleString())}</td>
+            <td><span class="${isStolen ? 'badge-stolen' : 'badge-recovered'}">${isStolen ? 'STOLEN' : 'RECOVERED'}</span></td>
+            <td>${isStolen ? `<button type="button" class="btn-sm btn-secondary" data-recover="${esc(r.StolenID)}">Mark recovered</button>` : '-'}</td>
+          </tr>`;
+        }).join('') : '<tr><td colspan="7">No records found.</td></tr>';
+      } catch (err) {
+        rows.innerHTML = `<tr><td colspan="7">${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    rows.addEventListener('click', async e => {
+      const btn = e.target.closest('button[data-recover]');
+      if (!btn) return;
+      if (!confirm('Mark this vehicle as recovered? Scanners will stop showing the stolen alert for it.')) return;
+      btn.disabled = true;
+      try {
+        await api('/api/stolen/' + encodeURIComponent(btn.dataset.recover) + '/recover', { method: 'POST', body: {} });
+        loadList();
+      } catch (err) { alert(err.message); btn.disabled = false; }
+    });
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      formStatus.textContent = '';
+      try {
+        const data = await api('/api/stolen', {
+          method: 'POST',
+          body: {
+            plate: $('plate').value,
+            makeAndModel: $('makeAndModel').value,
+            colour: $('colour').value,
+            ownerName: $('ownerName').value,
+            complaintNo: $('complaintNo').value,
+            details: $('details').value
+          }
+        });
+        formStatus.innerHTML = `<span style="color:#86efac">${esc(data.plate)} added to the stolen vehicle list.</span>`;
+        form.reset();
+        filter.value = 'active';
+        loadList();
+      } catch (err) {
+        if (err.status === 401) return location.replace('index.html');
+        formStatus.innerHTML = `<span style="color:#fca5a5">${esc(err.message)}</span>`;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    filter.addEventListener('change', loadList);
+    $('plate').value = new URLSearchParams(location.search).get('plate') || '';
+
+    guardPage({ needDuty: false }).then(session => { if (session) loadList(); });
+  </script>
+</body>
+</html>
