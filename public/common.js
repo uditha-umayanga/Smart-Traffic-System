@@ -33,6 +33,10 @@ function clearAllScannedData() {
 
 // Navigation bar ekata "Clear Data" button eka ibema ekathu karanawa
 function injectClearDataButton() {
+  const page = window.location.pathname.split('/').pop();
+  const allowedPages = ['vehicle-scan.html', 'driver-search.html', 'add-violation.html'];
+  if (!allowedPages.includes(page)) return;
+
   const nav = document.querySelector('header nav');
   if (!nav || document.getElementById('navClearDataBtn')) return;
 
@@ -52,7 +56,6 @@ function injectClearDataButton() {
     }
 
     // Danata open wela thiyena page eke fill wechcha fields clear karanawa
-    const page = window.location.pathname.split('/').pop();
     if (page === 'vehicle-scan.html') {
       const plateInput = document.getElementById('plateInput');
       if (plateInput) plateInput.value = '';
