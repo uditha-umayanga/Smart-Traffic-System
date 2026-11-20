@@ -260,10 +260,10 @@ app.get('/api/vehicles/:plate', requireOfficer, async (req, res) => {
   try {
     const rawPlate = clean(req.params.plate);
 
-    // Stolen check (works even when the plate is not in the Vehicles registry)
+    // Stolen check(works even when the plate is not in the Vehicles registry)
     let stolen = await findStolen(pool, rawPlate);
 
-    // Ignores spaces, dashes and letter case, so "WP CAA-7892" and "wpcaa7892" match
+    // Ignores spaces,dashes and letter case,so "WP CAA-7892" and "wpcaa7892" match
     const vehicle = await pool.request()
       .input('plate', sql.VarChar, rawPlate)
       .query(`SELECT RegistrationPlate, MakeAndModel, RegisteredOwner, RevenueLicenseStatus,
