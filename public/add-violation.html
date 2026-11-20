@@ -113,8 +113,12 @@
       const plate = vehInput.value.trim();
       if (!plate) { vehicleStatus.textContent = ''; return; }
       try {
-        const { vehicle: v, unpaidSummons } = await api('/api/vehicles/' + encodeURIComponent(plate));
-        vehicleStatus.innerHTML = `Vehicle: <strong>${esc(v.MakeAndModel)}</strong> · Owner: ${esc(v.RegisteredOwner)} · Unpaid summonses: ${esc(unpaidSummons)}`;
+       const { vehicle: v, unpaidSummons, stolen } = await api('/api/vehicles/' + encodeURIComponent(plate));
+let html = v
+  ? `Vehicle: <strong>${esc(v.MakeAndModel)}</strong> · Owner: ${esc(v.RegisteredOwner)} · Unpaid summonses: ${esc(unpaidSummons)}`
+  : 'Vehicle is not in the registry.';
+if (stolen) html += `<br><span class="stolen-inline">🚨 STOLEN VEHICLE ALERT: this vehicle has been reported stolen!</span>`;
+vehicleStatus.innerHTML = html;
       } catch (err) {
         vehicleStatus.innerHTML = `<span style="color:#fca5a5">${esc(err.message)}</span>`;
       }
