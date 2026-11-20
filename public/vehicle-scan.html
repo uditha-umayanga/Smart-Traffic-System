@@ -80,6 +80,49 @@
     const result = document.getElementById('result');
 
     guardPage();
+        const $ = id => document.getElementById(id);
+
+    // ---------- Stolen vehicle alert ----------
+    function alarm() {
+      try { if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 600]); } catch (_) {}
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        const ctx = new AC();
+        let t = ctx.currentTime;
+        for (let i = 0; i < 6; i++) {
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = 'square'; o.frequency.value = i % 2 ? 660 : 880; g.gain.value = 0.15;
+          o.connect(g); g.connect(ctx.destination);
+          o.start(t); o.stop(t + 0.25); t += 0.3;
+        }
+        setTimeout(() => ctx.close(), 2500);
+      } catch (_) {}
+    }
+
+    function showStolen(s, plate) {
+      const banner = $('stolenBanner');
+      if (!s) { banner.hidden = true; return; }
+      const shownPlate = s.RegistrationPlate || plate;
+      const rows = [
+        ['Vehicle', [s.MakeAndModel, s.Colour].filter(Boolean).join(' · ')],
+        ['Owner', s.OwnerName],
+        ['Police complaint no.', s.ComplaintNo],
+        ['Reported stolen', s.ReportedAt ? new Date(s.ReportedAt).toLocaleString() : ''],
+        ['Details', s.Details]
+      ].filter(r => r[1]);
+
+      banner.innerHTML = `🚨 STOLEN VEHICLE: ${esc(shownPlate)} has been reported stolen!` +
+        `<small>${rows.map(r => esc(r[0]) + ': ' + esc(r[1])).join(' | ')}</small>`;
+      banner.hidden = false;
+
+      $('stolenPlate').textContent = shownPlate;
+      $('stolenInfo').innerHTML = rows.map(r => `<dt>${esc(r[0])}</dt><dd>${esc(r[1])}</dd>`).join('');
+      $('stolenOverlay').hidden = false;
+      alarm();
+    }
+
+    $('stolenClose').addEventListener('click', () => { $('stolenOverlay').hidden = true; });
 
     plateForm.addEventListener('submit', async (e) => {
       e.preventDefault();
