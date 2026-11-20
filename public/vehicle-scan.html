@@ -37,6 +37,7 @@
         <input type="text" id="plateInput" name="plateInput" placeholder="Enter plate, e.g. WP CAA-7892" required>
         <button type="submit">Query Vehicle Registry</button>
       </form>
+            <div id="stolenBanner" class="stolen-banner" role="alert" hidden></div>
     </section>
 
     <section id="result" hidden>
@@ -54,6 +55,18 @@
       </div>
     </section>
   </main>
+    <!-- Red full-screen alert shown when a scanned plate is on the stolen vehicle list -->
+  <div id="stolenOverlay" class="stolen-overlay" role="alertdialog" aria-modal="true" aria-labelledby="stolenTitle" hidden>
+    <div class="stolen-modal">
+      <div class="stolen-icon">🚨</div>
+      <h2 id="stolenTitle">STOLEN VEHICLE ALERT</h2>
+      <p class="stolen-lead">This vehicle has been reported stolen!</p>
+      <div class="stolen-plate" id="stolenPlate"></div>
+      <dl id="stolenInfo"></dl>
+      <p class="stolen-advice">Do not confront the driver alone. Request backup and inform the control room immediately.</p>
+      <button type="button" id="stolenClose">Acknowledge</button>
+    </div>
+  </div>
 
   <footer>
     <p>&copy; 2026 TRAFFIX Central - ANPR Enforcement Module</p>
