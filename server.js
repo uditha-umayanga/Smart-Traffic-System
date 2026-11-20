@@ -258,9 +258,14 @@ app.get('/api/vehicles/:plate', requireOfficer, async (req, res) => {
   const pool = await getPool(res);
   if (!pool) return;
   try {
+    const rawPlate = clean(req.params.plate);
+
+    // Stolen check (works even when the plate is not in the Vehicles registry)
+    let stolen = await findStolen(pool, rawPlate);
+
     // Ignores spaces, dashes and letter case, so "WP CAA-7892" and "wpcaa7892" match
     const vehicle = await pool.request()
-      .input('plate', sql.VarChar, clean(req.params.plate))
+      .input('plate', sql.VarChar, rawPlate)
       .query(`SELECT RegistrationPlate, MakeAndModel, RegisteredOwner, RevenueLicenseStatus,
                      InsuranceStatus, PendingFineBalance
               FROM Vehicles
@@ -268,16 +273,24 @@ app.get('/api/vehicles/:plate', requireOfficer, async (req, res) => {
                   = REPLACE(REPLACE(UPPER(@plate), ' ', ''), '-', '')`);
 
     if (!vehicle.recordset.length) {
+      // Not in the registry, but it may still be on the stolen list
+      if (stolen) return res.json({ vehicle: null, unpaidSummons: 0, stolen });
       return res.status(404).json({ error: 'No vehicle found with this registration plate.' });
     }
 
     const plate = vehicle.recordset[0].RegistrationPlate;
+    if (!stolen) stolen = await findStolen(pool, plate);
+
     const unpaid = await pool.request()
       .input('plate', sql.VarChar, plate)
       .query(`SELECT COUNT(*) AS n FROM Violations
               WHERE RegistrationPlate = @plate AND FineStatus = 'Unpaid'`);
 
-    res.json({ vehicle: vehicle.recordset[0], unpaidSummons: unpaid.recordset[0].n });
+    if (stolen) {
+      console.warn(`STOLEN VEHICLE ALERT: ${stolen.RegistrationPlate} checked by ${req.session.officer.badgeId}`);
+    }
+
+    res.json({ vehicle: vehicle.recordset[0], unpaidSummons: unpaid.recordset[0].n, stolen });
   } catch (err) { fail(res, err); }
 });
 
