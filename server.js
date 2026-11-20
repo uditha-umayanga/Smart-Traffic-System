@@ -373,6 +373,82 @@ app.post('/save-violation', requireOfficer, requireDuty, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 
+// ---------- Stolen vehicles ----------
+app.get('/api/stolen', requireOfficer, async (req, res) => {
+  const pool = await getPool(res);
+  if (!pool) return;
+  try {
+    const onlyActive = req.query.status !== 'all';
+    const result = await pool.request().query(
+      `SELECT TOP 200 StolenID, RegistrationPlate, MakeAndModel, Colour, OwnerName, ComplaintNo,
+              Details, Status, ReportedByBadgeID, ReportedAt, RecoveredAt
+       FROM StolenVehicles
+       ${onlyActive ? "WHERE Status = 'Stolen'" : ''}
+       ORDER BY ReportedAt DESC`
+    );
+    res.json(result.recordset);
+  } catch (err) { fail(res, err); }
+});
+
+app.post('/api/stolen', requireOfficer, async (req, res) => {
+  const plate = clean(req.body.plate).replace(/\s+/g, ' ').toUpperCase();
+  const makeAndModel = clean(req.body.makeAndModel).slice(0, 100);
+  const colour = clean(req.body.colour).slice(0, 50);
+  const ownerName = clean(req.body.ownerName).slice(0, 150);
+  const complaintNo = clean(req.body.complaintNo).slice(0, 50);
+  const details = clean(req.body.details).slice(0, 500);
+  const norm = normPlate(plate);
+
+  if (!plate) return res.status(400).json({ error: 'Vehicle plate number is required.' });
+  if (plate.length > 20 || norm.length < 3) {
+    return res.status(400).json({ error: 'Please enter a valid plate number (e.g. CAB-1234).' });
+  }
+
+  const pool = await getPool(res);
+  if (!pool) return;
+  try {
+    const dup = await findStolen(pool, plate);
+    if (dup) {
+      return res.status(409).json({ error: `${dup.RegistrationPlate} is already on the stolen vehicle list.` });
+    }
+
+    await pool.request()
+      .input('plate', sql.VarChar, plate)
+      .input('norm', sql.VarChar, norm)
+      .input('core', sql.VarChar, plateCore(norm))
+      .input('model', sql.VarChar, makeAndModel || null)
+      .input('colour', sql.VarChar, colour || null)
+      .input('owner', sql.VarChar, ownerName || null)
+      .input('complaint', sql.VarChar, complaintNo || null)
+      .input('details', sql.VarChar, details || null)
+      .input('badge', sql.VarChar, req.session.officer.badgeId)
+      .query(`INSERT INTO StolenVehicles
+                (RegistrationPlate, PlateNorm, PlateCore, MakeAndModel, Colour, OwnerName,
+                 ComplaintNo, Details, ReportedByBadgeID)
+              VALUES (@plate, @norm, @core, @model, @colour, @owner, @complaint, @details, @badge)`);
+
+    res.json({ ok: true, plate });
+  } catch (err) { fail(res, err); }
+});
+
+app.post('/api/stolen/:id/recover', requireOfficer, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid record.' });
+
+  const pool = await getPool(res);
+  if (!pool) return;
+  try {
+    const r = await pool.request()
+      .input('id', sql.Int, id)
+      .input('badge', sql.VarChar, req.session.officer.badgeId)
+      .query(`UPDATE StolenVehicles
+              SET Status = 'Recovered', RecoveredAt = GETDATE(), RecoveredByBadgeID = @badge
+              WHERE StolenID = @id AND Status = 'Stolen'`);
+    if (!r.rowsAffected[0]) return res.status(404).json({ error: 'Active stolen record not found.' });
+    res.json({ ok: true });
+  } catch (err) { fail(res, err); }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
   console.log(`Open http://localhost:${PORT}/index.html in your browser`);
