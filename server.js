@@ -53,6 +53,58 @@ function fail(res, err) {
   console.error(err);
   res.status(500).json({ error: 'Database error: ' + err.message });
 }
+// ---------- Stolen vehicle helpers ----------
+const PROVINCE_PREFIX = /^(WP|CP|SP|NP|EP|NW|NC|UP|SG)/i;
+const normPlate = v => String(v || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+const plateCore = norm => norm.replace(PROVINCE_PREFIX, '');
+
+// Creates the StolenVehicles table automatically if it does not exist yet.
+poolPromise.then(async pool => {
+  if (!pool) return;
+  try {
+    await pool.request().query(`
+      IF OBJECT_ID('dbo.StolenVehicles', 'U') IS NULL
+      CREATE TABLE dbo.StolenVehicles (
+        StolenID           INT IDENTITY(1,1) PRIMARY KEY,
+        RegistrationPlate  VARCHAR(20)  NOT NULL,
+        PlateNorm          VARCHAR(20)  NOT NULL,
+        PlateCore          VARCHAR(20)  NOT NULL,
+        MakeAndModel       VARCHAR(100) NULL,
+        Colour             VARCHAR(50)  NULL,
+        OwnerName          VARCHAR(150) NULL,
+        ComplaintNo        VARCHAR(50)  NULL,
+        Details            VARCHAR(500) NULL,
+        Status             VARCHAR(20)  NOT NULL DEFAULT 'Stolen',
+        ReportedByBadgeID  VARCHAR(20)  NULL,
+        ReportedAt         DATETIME     NOT NULL DEFAULT GETDATE(),
+        RecoveredAt        DATETIME     NULL,
+        RecoveredByBadgeID VARCHAR(20)  NULL
+      );`);
+    console.log('StolenVehicles table is ready.');
+  } catch (err) {
+    console.error('Could not create StolenVehicles table:', err.message);
+  }
+});
+
+// Returns the active stolen-vehicle record for a plate, or null.
+async function findStolen(pool, rawPlate) {
+  const norm = normPlate(rawPlate);
+  if (!pool || !norm) return null;
+  try {
+    const r = await pool.request()
+      .input('norm', sql.VarChar, norm)
+      .input('core', sql.VarChar, plateCore(norm))
+      .query(`SELECT TOP 1 StolenID, RegistrationPlate, MakeAndModel, Colour, OwnerName,
+                     ComplaintNo, Details, ReportedAt
+              FROM StolenVehicles
+              WHERE Status = 'Stolen' AND (PlateNorm = @norm OR PlateCore = @core)
+              ORDER BY ReportedAt DESC`);
+    return r.recordset[0] || null;
+  } catch (err) {
+    console.error('Stolen vehicle check failed:', err.message);
+    return null;
+  }
+}
 
 // ---------- Officer login and session ----------
 app.post('/api/login', async (req, res) => {
