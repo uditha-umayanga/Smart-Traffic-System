@@ -126,6 +126,20 @@ header h1 {
   gap: 10px;
 }
 
+header .brand::before,
+header h1::before {
+  content: "";
+  display: inline-block;
+  width: 38px;
+  height: 38px;
+  background-image: url('images/logo.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
 header img {
   height: 36px;
   width: auto;
@@ -168,6 +182,19 @@ nav a[href="index.html"]:last-child:hover {
   background-color: #b91c1c;
 }
 
+nav button.btn-clear-data {
+  width: auto;
+  background-color: #d97706;
+  color: #ffffff;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+nav button.btn-clear-data:hover {
+  background-color: #b45309;
+}
 /* 3. Main Layout Container */
 main {
   flex: 1;
@@ -493,6 +520,19 @@ footer {
   td {
     padding: 10px;
     font-size: 13px;
+  }
+
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  th, td {
+    padding: 10px 12px;
+    font-size: 0.88rem;
   }
 }
 

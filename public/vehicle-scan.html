@@ -68,7 +68,10 @@
         <div>
           <label for="plateInput">Plate number</label>
           <div class="plate-row">
-            <input type="text" id="plateInput" placeholder="WP CAB-1234" autocomplete="off">
+            <input type="text" id="plateInput" placeholder="CAB-1234" autocomplete="off">
+          </div>
+          <br>
+          <div>
             <button type="button" id="lookupBtn">Search</button>
           </div>
           <p id="vehStatus" class="scan-msg" role="status"></p>
@@ -143,6 +146,7 @@
     function showResult(data) {
       if (data.plate) {
         plateInput.value = data.plate;
+        saveScannedData('vehNo', data.plate);
       }
       if (!data.vehicle) {
         clearDetails();
@@ -150,6 +154,7 @@
         return;
       }
       const v = data.vehicle;
+      saveScannedData('vehNo', v.RegistrationPlate);
       $('fModel').value = v.MakeAndModel ?? '';
       $('fOwner').value = v.RegisteredOwner ?? '';
       $('fRevenue').value = v.RevenueLicenseStatus ?? '';
@@ -163,53 +168,61 @@
 
     // ---------- Server / AI ekata image eka yawanna ----------
     async function sendImage(blob) {
-      // 1. Try Node backend (/api/scan-plate)
+      // 1. Try Node backend (/api/scan-plate) - Works on both PC and Phone Port Forwarding!
       try {
         const fd = new FormData();
         fd.append('image', blob, 'plate.jpg');
         const url = (window.location.protocol === 'file:') ? 'http://localhost:3000/api/scan-plate' : '/api/scan-plate';
         const res = await fetch(url, { method: 'POST', body: fd });
         const data = await res.json().catch(() => ({}));
+
+        // Server eken response ekak awoth (200 OK ho 404 Plate not found) kelinma return karanna
         if (res.ok) {
           return { status: res.status, ok: true, data };
+        }
+        if (res.status === 404 || res.status === 401 || res.status === 400) {
+          return { status: res.status, ok: false, data };
         }
       } catch (e) {
         console.warn('Backend proxy /api/scan-plate unavailable:', e.message);
       }
 
-      // 2. Direct fallback to Python FastAPI AI service (http://127.0.0.1:8000/api/scan)
-      try {
-        const aiFd = new FormData();
-        aiFd.append('image', blob, 'plate.jpg');
-        const aiRes = await fetch('http://127.0.0.1:8000/api/scan', { method: 'POST', body: aiFd });
-        const aiData = await aiRes.json().catch(() => ({}));
-        if (aiRes.ok && aiData.found) {
-          let vehicle = null;
-          let unpaidSummons = 0;
-          try {
-            const vData = await api('/api/vehicles/' + encodeURIComponent(aiData.plate));
-            vehicle = vData.vehicle;
-            unpaidSummons = vData.unpaidSummons || 0;
-          } catch (_) {}
+      // 2. Direct fallback ONLY when opened on PC (localhost / file://), NOT on Phone
+      const isLocalPC = ['localhost', '127.0.0.1', ''].includes(window.location.hostname);
+      if (isLocalPC) {
+        try {
+          const aiFd = new FormData();
+          aiFd.append('image', blob, 'plate.jpg');
+          const aiRes = await fetch('http://127.0.0.1:8000/api/scan', { method: 'POST', body: aiFd });
+          const aiData = await aiRes.json().catch(() => ({}));
+          if (aiRes.ok && aiData.found) {
+            let vehicle = null;
+            let unpaidSummons = 0;
+            try {
+              const vData = await api('/api/vehicles/' + encodeURIComponent(aiData.plate));
+              vehicle = vData.vehicle;
+              unpaidSummons = vData.unpaidSummons || 0;
+            } catch (_) {}
 
-          return {
-            status: 200,
-            ok: true,
-            data: {
-              plate: vehicle ? vehicle.RegistrationPlate : aiData.plate,
-              confidence: aiData.confidence,
-              vehicle,
-              unpaidSummons
-            }
-          };
-        } else if (aiRes.ok && !aiData.found) {
-          return { status: 404, ok: false, data: { error: aiData.message || 'Could not find a number plate.' } };
+            return {
+              status: 200,
+              ok: true,
+              data: {
+                plate: vehicle ? vehicle.RegistrationPlate : aiData.plate,
+                confidence: aiData.confidence,
+                vehicle,
+                unpaidSummons
+              }
+            };
+          } else if (aiRes.ok && !aiData.found) {
+            return { status: 404, ok: false, data: { error: aiData.message || 'Could not find a number plate.' } };
+          }
+        } catch (err) {
+          console.error('Direct AI scan error:', err);
         }
-      } catch (err) {
-        console.error('Direct AI scan error:', err);
       }
 
-      return { status: 500, ok: false, data: { error: 'Scan service unavailable. Make sure port 8000 is running.' } };
+      return { status: 500, ok: false, data: { error: 'Scan service unavailable. Make sure port 8000 is running on PC.' } };
     }
 
     function toBlob(source, sw, sh) {
@@ -372,7 +385,13 @@
     lookupBtn.addEventListener('click', manualLookup);
     plateInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); manualLookup(); } });
 
-    guardPage();
+    guardPage().then(session => {
+      const savedVeh = getScannedData('vehNo');
+      if (session && savedVeh && !plateInput.value) {
+        plateInput.value = savedVeh;
+        manualLookup();
+      }
+    });
   </script>
 </body>
 </html>
