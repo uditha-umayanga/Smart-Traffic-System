@@ -38,7 +38,7 @@ PROVINCES = {"WP", "CP", "SP", "NP", "EP", "NW", "NC", "UP", "SG"}
 
 
 def clean(text: str) -> str:
-    """Province letters (WP, SP...) saha podi category akuru ain karala main plate eka witharak (e.g. QL-9904, NC-9024) denawa."""
+    """Sri Lankan Emblem (I/1) saha Province letters (WP, CP, SP...) ain karala main plate eka (e.g. KB-1502, CAB-1234) denawa."""
     t = re.sub(r"[^A-Z0-9]", "", text.upper())
     if len(t) < 5:
         return ""
@@ -49,16 +49,26 @@ def clean(text: str) -> str:
 
     prefix = prefix.translate(TO_LETTER)          # letters walata mixed digits fix
 
-    # Mulata ho agata province code (WP, SP, CP...) ekak aawoth eka ain karanawa
-    if len(prefix) >= 4:
-        if prefix[:2] in PROVINCES:
-            prefix = prefix[2:]
-        elif prefix[-2:] in PROVINCES:
-            prefix = prefix[:-2]
+    # 1. Vam kelaware Sri Lanka rajya lanchana (Emblem) nisa ena 'I' ho 'L' ain karanawa
+    if len(prefix) >= 4 and prefix[0] in {"I", "L", "1"}:
+        prefix = prefix[1:]
 
-    # Thawath akuru 3kata wada thiyenawanam (e.g. NCD wage) mul akuru 2 ho 3 thiyagannawa
-    if len(prefix) > 3:
-        prefix = prefix[:3]
+    # 2. Mulata province code (WP, SP, CP, NP, EP, NW, NC, UP, SG) ekak aawoth eka ain karanawa
+    if len(prefix) >= 4 and prefix[:2] in PROVINCES:
+        prefix = prefix[2:]
+
+    # 3. Agata province code ekak aawoth eka ain karanawa
+    if len(prefix) >= 4 and prefix[-2:] in PROVINCES:
+        prefix = prefix[:-2]
+
+    # 4. Prefix eke akuru 3k ho eeta wada thiyenawanam (e.g. "CPKB", "PKB", "CAB", "BHG"):
+    # Sri Lankan 3-letter series patan ganne 'B' ho 'C' akuren witharai.
+    # Anthima akuru 3 'B' ho 'C' walin patan nogannawanam (e.g. "PKB"), anthima akuru 2 ("KB") witharak gannawa!
+    if len(prefix) >= 3:
+        if prefix[-3] in {"B", "C"}:
+            prefix = prefix[-3:]
+        else:
+            prefix = prefix[-2:]
 
     return f"{prefix}-{digits}"
 
@@ -69,7 +79,6 @@ def _normalize_size(crop, target_w=420):
     if w == 0 or h == 0:
         return crop
     scale = target_w / float(w)
-    # Podi images poddak loku karanawa, loku close-up images podi karanawa (max ~420px width)
     scale = max(0.35, min(2.0, scale))
     new_w = max(60, int(w * scale))
     new_h = max(30, int(h * scale))
@@ -82,7 +91,6 @@ def _variants(crop):
     gray = cv2.cvtColor(norm_crop, cv2.COLOR_BGR2GRAY)
     yield "gray", gray
 
-    # Screen scanlines / noise nisa kadunu akuru (9 -> 2 wage) smooth karala hadanawa
     smooth = cv2.GaussianBlur(gray, (3, 3), 0)
     yield "smooth", smooth
 
@@ -90,7 +98,6 @@ def _variants(crop):
     yield "clahe", clahe
 
     _, otsu = cv2.threshold(smooth, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    # Kalu akuru wala podi irithalim (gaps) purawanawa
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
     closed = cv2.morphologyEx(otsu, cv2.MORPH_OPEN, kernel)
     yield "otsu", closed
@@ -125,7 +132,6 @@ def _order(toks, two_line):
     cys = [t["cy"] for t in toks]
 
     if two_line and (max(cys) - min(cys)) > 0.65 * H:
-        # Bottom digits (4 ilakkam) wenama adunagannawa
         digit_toks = [t for t in toks if t["text"].translate(TO_DIGIT).isdigit() and len(t["text"]) >= 3]
         if digit_toks:
             bottom_y = min(t["cy"] for t in digit_toks) - 0.25 * H
@@ -148,7 +154,6 @@ def _drop_tiny(toks):
     H = max(t["h"] for t in toks)
     out = []
     for t in toks:
-        # Pradhana akuru wala usin 72% ta wada podi akuru (SP, WP, D) ain karanawa
         if t["h"] < 0.72 * H:
             continue
         out.append(t)
@@ -181,7 +186,6 @@ def _ocr(crop):
     if not votes:
         return ("", 0.0)
 
-    # Wadiyama variants gananakin hariyata kiyawunu (Majority vote) saha wadi score ekak athi plate eka thoragannawa
     best_text, (count, max_score) = max(votes.items(), key=lambda kv: (kv[1][0], kv[1][1]))
     return (best_text, max_score)
 
