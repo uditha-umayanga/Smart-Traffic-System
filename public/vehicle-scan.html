@@ -23,6 +23,72 @@
     .err { color: #fca5a5; }
     .ok { color: #86efac; }
     #violationLink { display: inline-block; margin-top: 14px; }
+
+    /* Stolen Vehicle Alert Popup Modal */
+    .stolen-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+      display: grid;
+      place-items: center;
+      z-index: 9999;
+      padding: 16px;
+    }
+
+    .stolen-modal {
+      background: #1e1b1e;
+      border: 3px solid #ef4444;
+      border-radius: 14px;
+      max-width: 440px;
+      width: 100%;
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 0 35px rgba(239, 68, 68, 0.65);
+      animation: stolenPulse 1.2s infinite alternate;
+    }
+
+    @keyframes stolenPulse {
+      from { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+      to   { box-shadow: 0 0 42px rgba(239, 68, 68, 0.95); }
+    }
+
+    .stolen-modal h3 {
+      color: #f87171;
+      font-size: 1.45rem;
+      margin: 0 0 10px;
+      letter-spacing: 0.04em;
+    }
+
+    .stolen-plate-tag {
+      display: inline-block;
+      background: #dc2626;
+      color: #fff;
+      font-size: 1.3rem;
+      font-weight: 800;
+      padding: 6px 16px;
+      border-radius: 8px;
+      letter-spacing: 0.1em;
+      margin-bottom: 12px;
+    }
+
+    .stolen-modal p {
+      color: #fecaca;
+      margin: 6px 0;
+      font-size: 0.98rem;
+    }
+
+    .stolen-modal button {
+      margin-top: 18px;
+      background: #dc2626;
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -109,6 +175,17 @@
     </section>
   </main>
 
+  <!-- Stolen Vehicle Alert Popup -->
+  <div id="stolenModal" class="stolen-modal-backdrop" hidden>
+    <div class="stolen-modal" role="alertdialog" aria-modal="true">
+      <h3>🚨 STOLEN VEHICLE ALERT</h3>
+      <div id="stolenPlateTag" class="stolen-plate-tag"></div>
+      <p id="stolenVehicleInfo"></p>
+      <p><strong>Action Required:</strong> Detain vehicle immediately and notify Central Dispatch.</p>
+      <button type="button" id="closeStolenModal">Acknowledge Alert</button>
+    </div>
+  </div>
+
   <footer>
     <p>&copy; 2026 TRAFFIX Central - Digital Summons Registry</p>
   </footer>
@@ -127,6 +204,7 @@
     const uploadBtn = $('uploadBtn'), photoInput = $('photoInput');
     const scanStatus = $('scanStatus'), vehStatus = $('vehStatus');
     const plateInput = $('plateInput'), lookupBtn = $('lookupBtn'), violationLink = $('violationLink');
+    const stolenModal = $('stolenModal'), closeStolenModal = $('closeStolenModal');
 
     let stream = null, facing = 'environment', liveOn = false, busy = false, votes = [];
     let currentBlob = null;
@@ -136,6 +214,32 @@
 
     function setScan(msg, cls) { scanStatus.className = 'scan-msg ' + (cls || ''); scanStatus.textContent = msg; }
     function setVeh(html, cls) { vehStatus.className = 'scan-msg ' + (cls || ''); vehStatus.innerHTML = html; }
+
+    // ---------- Stolen Vehicle Popup Alert ----------
+    closeStolenModal.addEventListener('click', () => { stolenModal.hidden = true; });
+
+    function triggerStolenAlert(v) {
+      $('stolenPlateTag').textContent = v.RegistrationPlate;
+      $('stolenVehicleInfo').innerHTML =
+        `<strong>${esc(v.MakeAndModel)}</strong> · Registered Owner: <strong>${esc(v.RegisteredOwner)}</strong>`;
+      stolenModal.hidden = false;
+
+      // Police alert beep sound
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [880, 660, 880].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.value = freq;
+          gain.gain.value = 0.12;
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + idx * 0.18);
+          osc.stop(ctx.currentTime + idx * 0.18 + 0.14);
+        });
+      } catch (_) {}
+    }
 
     // ---------- Vehicle details ----------
     function clearDetails() {
@@ -163,7 +267,15 @@
       $('fUnpaid').value = data.unpaidSummons ?? 0;
       violationLink.href = 'add-violation.html?vehNo=' + encodeURIComponent(v.RegistrationPlate);
       violationLink.hidden = false;
-      setVeh('Vehicle details loaded.', 'ok');
+
+      // Vehicles table eke Status column eka 'Stolen' da kiyala check karanawa
+      const statusText = String(v.Status || '').trim().toLowerCase();
+      if (statusText === 'stolen') {
+        setVeh('🚨 WARNING: THIS VEHICLE IS REPORTED STOLEN!', 'err');
+        triggerStolenAlert(v);
+      } else {
+        setVeh('Vehicle details loaded.', 'ok');
+      }
     }
 
     // ---------- Server / AI ekata image eka yawanna ----------

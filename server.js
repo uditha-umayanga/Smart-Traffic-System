@@ -49,6 +49,43 @@ app.get('/', (req, res) => res.redirect('/index.html'));
 // ---------- Helpers ----------
 const clean = v => (typeof v === 'string' ? v.trim() : '');
 
+// Palath akuru (WP, SP, CP...) mulinma thibunoth witharak (e.g. "WP NC-9024" -> "NC9024") ain karana helper eka
+function stripProvinceAndFormat(plate) {
+  const upper = String(plate || '').toUpperCase().trim();
+
+  // Space ho '-' walin kotas walata kadanawa (e.g. "WP NC-9024" -> ["WP", "NC", "9024"] / "NC-9024" -> ["NC", "9024"])
+  const parts = upper.split(/[\s-]+/).filter(Boolean);
+
+  // Kotas 3k (e.g. ["WP", "NC", "9024"]) thiyenawanam saha mul kotasa palathak nam eka witharak ain karanawa
+  if (parts.length >= 3 && /^(WP|CP|SP|NP|EP|NW|NC|UP|SG)$/.test(parts[0])) {
+    parts.shift();
+  }
+
+  let joined = parts.join('').replace(/[^A-Z0-9]/g, '');
+
+  // Space/dash nathuwa "WPNC9024" lesa ekatama thibunoth, mul palath akuru 2 witharak ain karanawa
+  if (/^(WP|CP|SP|NP|EP|NW|NC|UP|SG)[A-Z]{2,3}\d{4}$/.test(joined)) {
+    joined = joined.slice(2);
+  }
+
+  return joined;
+}
+
+async function findVehicleIgnoringProvince(pool, rawPlate) {
+  const targetClean = stripProvinceAndFormat(rawPlate);
+  if (!targetClean) return null;
+
+  const result = await pool.request().query(`
+    SELECT RegistrationPlate, MakeAndModel, RegisteredOwner, RevenueLicenseStatus,
+           InsuranceStatus, PendingFineBalance, Status
+    FROM Vehicles
+  `);
+
+  return result.recordset.find(
+    v => stripProvinceAndFormat(v.RegistrationPlate) === targetClean
+  ) || null;
+}
+
 function requireOfficer(req, res, next) {
   if (!req.session.officer) return res.status(401).json({ error: 'Please log in first.' });
   next();
@@ -309,22 +346,9 @@ app.post('/api/scan-plate', uploadPlate, async (req, res) => {
     let unpaidSummons = 0;
 
     if (pool) {
-      const cleanNorm = rawPlate.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-      const withoutProv = cleanNorm.replace(/^(WP|CP|SP|NP|EP|NW|NC|UP|SG)/i, '');
+      vehicle = await findVehicleIgnoringProvince(pool, rawPlate);
 
-      const vehRes = await pool.request()
-        .input('norm', sql.VarChar, cleanNorm)
-        .input('noProv', sql.VarChar, withoutProv)
-        .query(`
-          SELECT RegistrationPlate, MakeAndModel, RegisteredOwner, RevenueLicenseStatus,
-                 InsuranceStatus, PendingFineBalance
-          FROM Vehicles
-          WHERE REPLACE(REPLACE(UPPER(RegistrationPlate), ' ', ''), '-', '') = @norm
-             OR REPLACE(REPLACE(UPPER(RegistrationPlate), ' ', ''), '-', '') LIKE '%' + @noProv
-        `);
-
-      if (vehRes.recordset.length) {
-        vehicle = vehRes.recordset[0];
+      if (vehicle) {
         const unpRes = await pool.request()
           .input('plate', sql.VarChar, vehicle.RegistrationPlate)
           .query(`SELECT COUNT(*) AS n FROM Violations WHERE RegistrationPlate = @plate AND FineStatus = 'Unpaid'`);
@@ -349,30 +373,18 @@ app.get('/api/vehicles/:plate', async (req, res) => {
   const pool = await getPool(res);
   if (!pool) return;
   try {
-    const raw = clean(req.params.plate);
-    const norm = raw.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-    const withoutProv = norm.replace(/^(WP|CP|SP|NP|EP|NW|NC|UP|SG)/i, '');
+    const vehicle = await findVehicleIgnoringProvince(pool, req.params.plate);
 
-    const vehicle = await pool.request()
-      .input('norm', sql.VarChar, norm)
-      .input('noProv', sql.VarChar, withoutProv)
-      .query(`SELECT RegistrationPlate, MakeAndModel, RegisteredOwner, RevenueLicenseStatus,
-                     InsuranceStatus, PendingFineBalance
-              FROM Vehicles
-              WHERE REPLACE(REPLACE(UPPER(RegistrationPlate), ' ', ''), '-', '') = @norm
-                 OR REPLACE(REPLACE(UPPER(RegistrationPlate), ' ', ''), '-', '') LIKE '%' + @noProv`);
-
-    if (!vehicle.recordset.length) {
+    if (!vehicle) {
       return res.status(404).json({ error: 'No vehicle found with this registration plate.' });
     }
 
-    const plate = vehicle.recordset[0].RegistrationPlate;
     const unpaid = await pool.request()
-      .input('plate', sql.VarChar, plate)
+      .input('plate', sql.VarChar, vehicle.RegistrationPlate)
       .query(`SELECT COUNT(*) AS n FROM Violations
               WHERE RegistrationPlate = @plate AND FineStatus = 'Unpaid'`);
 
-    res.json({ vehicle: vehicle.recordset[0], unpaidSummons: unpaid.recordset[0].n });
+    res.json({ vehicle, unpaidSummons: unpaid.recordset[0].n });
   } catch (err) { fail(res, err); }
 });
 
@@ -403,15 +415,11 @@ app.post('/save-violation', requireOfficer, requireDuty, async (req, res) => {
       return res.status(404).json({ error: `Driver ${licNo} is not in the registry.` });
     }
 
-    const vehicle = await pool.request()
-      .input('vehNo', sql.VarChar, vehNo)
-      .query(`SELECT RegistrationPlate FROM Vehicles
-              WHERE REPLACE(REPLACE(UPPER(RegistrationPlate), ' ', ''), '-', '')
-                  = REPLACE(REPLACE(UPPER(@vehNo), ' ', ''), '-', '')`);
-    if (!vehicle.recordset.length) {
+    const matchedVehicle = await findVehicleIgnoringProvince(pool, vehNo);
+    if (!matchedVehicle) {
       return res.status(404).json({ error: `Vehicle ${vehNo} is not in the registry.` });
     }
-    const plate = vehicle.recordset[0].RegistrationPlate;
+    const plate = matchedVehicle.RegistrationPlate;
 
     const witness = await pool.request()
       .input('badge', sql.VarChar, duty.nearbyOfficer)
